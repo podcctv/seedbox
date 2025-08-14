@@ -23,32 +23,16 @@ MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统�
 2. 确保已部署 [BitMagnet Next Web](https://github.com/journey-ad/Bitmagnet-Next-Web)，并拥有其 Postgres 只读连接串。
 3. 如果希望持久化数据，可在 `.env` 中自定义 `DATA_DIR` 指向挂载目录。
 
-### 2. 克隆代码并配置环境变量
+### 2. 克隆代码
 
-1. 在两台机器上拉取代码并复制环境变量模板：
+1. 在两台机器上拉取代码：
 
     ```bash
     git clone https://github.com/podcctv/seedbox.git
     cd seedbox
-    cp .env.example .env
     ```
 
-2. 根据节点类型编辑 `.env`：
-
-    模板已预设 Redis、MinIO 等默认配置，可直接使用或按需修改。
-
-    - **共同配置**（两台机器都需要）
-      - `DATA_DIR`：持久化数据目录，默认 `/opt/seedbox`。
-      - `MINIO_ENDPOINT`、`MINIO_ACCESS_KEY`、`MINIO_SECRET_KEY`、`MINIO_BUCKET_PREVIEWS`、`MINIO_BUCKET_HLS`：对象存储 MinIO 信息。
-    - **serve 节点专用**（仅在下载/展示节点填写）
-      - `APP_DB_NAME`、`APP_DB_USER`、`APP_DB_PASS`、`APP_DB_HOST`、`APP_DB_PORT`：内部数据库。
-      - `BITMAGNET_RO_DSN`：BitMagnet 只读数据库 DSN。
-      - `REDIS_URL`：Redis 缓存地址。
-      - `JWT_SECRET`、`JWT_EXP_HOURS`：JWT 鉴权参数。
-      - `QBT_BASEURL`、`QBT_USER`、`QBT_PASS`：qBittorrent 下载服务。
-      - `API_PUBLIC_BASE`、`WEB_PUBLIC_BASE`：对外访问域名或 IP。
-    - **transcode 节点专用**
-      - 目前无额外变量，确保已填写以上共同配置。
+2. 环境变量不再需要手动编辑，后续执行 `deploy.sh` 时会交互式填写所有配置项。
 
 ### MinIO Docker Compose 部署示例
 
@@ -83,7 +67,7 @@ MINIO_BUCKET_HLS=hls
 
 启动后可在 `http://localhost:9001` 访问控制台并创建 `previews` 与 `hls` 两个桶。
 
-### 3. 使用部署脚本快速启动
+### 3. 使用部署脚本配置并启动
 
 项目提供 `deploy.sh` 一键部署脚本，可在两端直接运行：
 
@@ -91,7 +75,7 @@ MINIO_BUCKET_HLS=hls
 bash deploy.sh
 ```
 
-根据提示选择 `server`（serve 节点）、`transcode`（transcode 节点）或 `both`（单机双端）。脚本会自动创建数据目录并启动对应的 Docker Compose 服务。
+脚本会自动拉取最新代码并引导你交互式填写所有服务配置（包含密码、路径等，直接回车即可接受默认值）。部署 `serve` 节点后会打印当前配置清单，并标出需要在 `transcode` 节点中保持一致的项。重新运行脚本即可更新并重新部署。
 
 ### 4. 手动部署 serve 节点
 
