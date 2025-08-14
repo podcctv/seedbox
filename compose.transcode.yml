@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  worker-ffmpeg:
+    image: jrottenberg/ffmpeg:4.4-alpine
+    volumes:
+      - ./worker/inbox:/inbox
+      - ./worker/outbox:/outbox
+  rclone-agent:
+    image: rclone/rclone
+    command: "rclone sync /outbox minio:"
+    volumes:
+      - ./worker/outbox:/outbox
+      - rclone-config:/config/rclone
+volumes:
+  rclone-config:
