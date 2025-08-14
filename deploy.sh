@@ -30,6 +30,38 @@ prepare_compose_with_free_ports() {
   echo "$dest"
 }
 
+display_ports() {
+  python - "$@" <<'PY'
+import sys, yaml
+ports = []
+for file in sys.argv[1:]:
+    with open(file) as f:
+        data = yaml.safe_load(f)
+    services = data.get("services", {}) or {}
+    for name, svc in services.items():
+        for mapping in svc.get("ports", []) or []:
+            host, _, container = mapping.partition(":")
+            ports.append((name, host, container))
+
+if not ports:
+    print("No services expose host ports.")
+else:
+    print("Service port mappings:")
+    for name, host, container in ports:
+        print(f"  {host} -> {name} (container {container})")
+    web = next((host for name, host, _ in ports if name == 'gateway'), None)
+    if web:
+        print(f"Web interface available at http://localhost:{web}")
+    else:
+        print("No web interface exposed.")
+    trans = next((host for name, host, _ in ports if name.startswith('worker') or 'transcode' in name), None)
+    if trans:
+        print(f"Connect to transcode server on port {trans}")
+    else:
+        print("Transcode services expose no ports.")
+PY
+}
+
 # Update repository
 if [ -d .git ]; then
   echo "Updating repository..."
@@ -101,14 +133,17 @@ case "$choice" in
   1)
     serve_compose=$(prepare_compose_with_free_ports compose.serve.yml)
     docker compose --project-directory "$REPO_DIR" -f "$serve_compose" up -d
+    display_ports "$serve_compose"
     rm "$serve_compose"
     ;;
   2)
     docker compose --project-directory "$REPO_DIR" -f compose.transcode.yml up -d
+    display_ports compose.transcode.yml
     ;;
   3)
     serve_compose=$(prepare_compose_with_free_ports compose.serve.yml)
     docker compose --project-directory "$REPO_DIR" -f "$serve_compose" -f compose.transcode.yml up -d
+    display_ports "$serve_compose" compose.transcode.yml
     rm "$serve_compose"
     ;;
   *)
