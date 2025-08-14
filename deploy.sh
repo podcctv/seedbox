@@ -89,40 +89,47 @@ if [ -d .git ]; then
   fi
 fi
 
-# Create .env if missing
-if [ ! -f .env ]; then
-  echo "Generating .env configuration..."
+configure_env() {
+  local tmp=$(mktemp)
+  echo "Configuring environment variables..."
   while IFS= read -r line; do
     if [[ -z "$line" || "$line" =~ ^# ]]; then
-      echo "$line" >> .env
+      echo "$line" >> "$tmp"
     else
-      var="${line%%=*}"
-      default="${line#*=}"
-      read -p "Enter value for $var [$default]: " value
-      value=${value:-$default}
-      echo "$var=$value" >> .env
+      local var="${line%%=*}"
+      local default="${line#*=}"
+      local current=""
+      if [ -f .env ]; then
+        current=$(grep -E "^${var}=" .env | cut -d= -f2-)
+      fi
+      local prompt="${current:-$default}"
+      read -p "Enter value for $var [$prompt]: " value
+      value=${value:-$prompt}
+      echo "$var=$value" >> "$tmp"
     fi
   done < .env.example
-fi
+  mv "$tmp" .env
+}
 
+print_config_summary() {
+  echo "Configuration summary:"
+  while IFS= read -r line; do
+    [[ -z "$line" || "$line" =~ ^# ]] && continue
+    echo "  $line"
+  done < .env
+  echo
+  echo "Transcode node requires these values:" 
+  for var in DATA_DIR MINIO_ENDPOINT MINIO_ACCESS_KEY MINIO_SECRET_KEY MINIO_BUCKET_PREVIEWS MINIO_BUCKET_HLS; do
+    local value=$(grep -E "^$var=" .env | cut -d= -f2-)
+    echo "  $var=$value"
+  done
+}
+
+# Configure environment interactively each run
+configure_env
 set -a
 source .env
 set +a
-
-# Prompt for persistent data directory
-default_dir=${DATA_DIR:-/opt/seedbox}
-read -p "Enter data directory [${default_dir}]: " DATA_DIR_INPUT
-DATA_DIR=${DATA_DIR_INPUT:-$default_dir}
-export DATA_DIR
-
-# Persist the chosen directory in .env
-if [ -f .env ]; then
-  if grep -q '^DATA_DIR=' .env; then
-    sed -i "s|^DATA_DIR=.*|DATA_DIR=$DATA_DIR|" .env
-  else
-    echo "DATA_DIR=$DATA_DIR" >> .env
-  fi
-fi
 
 mkdir -p \
   "$DATA_DIR/redis" \
@@ -147,6 +154,7 @@ case "$choice" in
     docker compose --project-directory "$REPO_DIR" -f "$serve_compose" up -d
     display_ports "$serve_compose"
     rm "$serve_compose"
+    print_config_summary
     ;;
   2)
     docker compose --project-directory "$REPO_DIR" -f compose.transcode.yml up -d
@@ -157,6 +165,7 @@ case "$choice" in
     docker compose --project-directory "$REPO_DIR" -f "$serve_compose" -f compose.transcode.yml up -d
     display_ports "$serve_compose" compose.transcode.yml
     rm "$serve_compose"
+    print_config_summary
     ;;
   *)
     echo "Invalid choice. Exiting."
