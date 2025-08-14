@@ -31,7 +31,7 @@ prepare_compose_with_free_ports() {
 }
 
 display_ports() {
-  python - "$@" <<'PY'
+  python3 - "$@" <<'PY'
 import sys, yaml
 ports = []
 for file in sys.argv[1:]:
