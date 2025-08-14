@@ -90,6 +90,17 @@ if [ -d .git ]; then
 fi
 
 configure_env() {
+  local template=".env.example"
+  if [ ! -f "$template" ]; then
+    if [ -f .env ]; then
+      echo ".env.example not found. Using existing .env as template." >&2
+      template=".env"
+    else
+      echo "No environment template found (missing .env.example or .env)." >&2
+      return 1
+    fi
+  fi
+
   local tmp=$(mktemp)
   echo "Configuring environment variables..."
   while IFS= read -r line; do
@@ -107,7 +118,7 @@ configure_env() {
       value=${value:-$prompt}
       echo "$var=$value" >> "$tmp"
     fi
-  done < .env.example
+  done < "$template"
   mv "$tmp" .env
 }
 
