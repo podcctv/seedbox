@@ -22,40 +22,49 @@ MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统�
 1. 在两台机器上安装 [Docker](https://docs.docker.com/engine/install/) 与 [Docker Compose](https://docs.docker.com/compose/install/).
 2. 确保已部署 [BitMagnet Next Web](https://github.com/journey-ad/Bitmagnet-Next-Web)，并拥有其 Postgres 只读连接串。
 
-### 2. 代码与环境变量
+### 2. 克隆代码并配置环境变量
 
-在两台机器上分别克隆本仓库并拷贝环境变量示例：
+1. 在两台机器上拉取代码并复制环境变量模板：
 
-```bash
-git clone https://github.com/your-org/seedbox.git
-cd seedbox
-cp .env.example .env
-```
+    ```bash
+    git clone https://github.com/your-org/seedbox.git
+    cd seedbox
+    cp .env.example .env
+    ```
 
-根据实际情况修改 `.env`，至少需配置：
+2. 根据节点类型编辑 `.env`：
 
-- `BITMAGNET_RO_DSN`：BitMagnet 只读数据库 DSN
-- `QBT_BASEURL`、`QBT_USER`、`QBT_PASS`：qBittorrent 下载服务
-- `MINIO_*`：对象存储 MinIO 信息
-- `API_PUBLIC_BASE`、`WEB_PUBLIC_BASE`：对外访问域名或 IP
+    - **共同配置**（两台机器都需要）
+      - `MINIO_ENDPOINT`、`MINIO_ACCESS_KEY`、`MINIO_SECRET_KEY`、`MINIO_BUCKET_PREVIEWS`、`MINIO_BUCKET_HLS`：对象存储 MinIO 信息。
+    - **serve 节点专用**（仅在下载/展示节点填写）
+      - `APP_DB_NAME`、`APP_DB_USER`、`APP_DB_PASS`、`APP_DB_HOST`、`APP_DB_PORT`：内部数据库。
+      - `BITMAGNET_RO_DSN`：BitMagnet 只读数据库 DSN。
+      - `REDIS_URL`：Redis 缓存地址。
+      - `JWT_SECRET`、`JWT_EXP_HOURS`：JWT 鉴权参数。
+      - `QBT_BASEURL`、`QBT_USER`、`QBT_PASS`：qBittorrent 下载服务。
+      - `API_PUBLIC_BASE`、`WEB_PUBLIC_BASE`：对外访问域名或 IP。
+    - **transcode 节点专用**
+      - 目前无额外变量，确保已填写以上共同配置。
 
 ### 3. 部署 serve 节点
 
-在下载/展示服务器上执行：
+1. 在 serve 节点上确认 `.env` 已填写共同配置和 serve 专用变量。
+2. 启动服务：
 
-```bash
-docker compose -f compose.serve.yml up -d
-```
+    ```bash
+    docker compose -f compose.serve.yml up -d
+    ```
 
 该节点包含 Web 前端、API、Postgres、MinIO、Redis 以及 qBittorrent 下载引擎。下载完成后会通过 webhook 通知 API。
 
 ### 4. 部署 transcode 节点
 
-在处理服务器上执行：
+1. 在 transcode 节点上确认 `.env` 已填写共同配置。
+2. 启动服务：
 
-```bash
-docker compose -f compose.transcode.yml up -d
-```
+    ```bash
+    docker compose -f compose.transcode.yml up -d
+    ```
 
 该节点运行 FFmpeg Worker 和 rclone，负责从 serve 节点拉取下载文件，生成 HLS 切片及预览图后上传至 MinIO。
 
