@@ -49,4 +49,6 @@ services:
       - ${DATA_DIR}/qbittorrent/config:/config
       - ${DATA_DIR}/qbittorrent/downloads:/downloads
       - ./scripts:/scripts:ro
+    ports:
+      - "8081:8080"
     restart: unless-stopped

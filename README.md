@@ -87,6 +87,7 @@ bash deploy.sh
     ```
 
 该节点包含 Web 前端、API、Postgres、MinIO、Redis 以及 qBittorrent 下载引擎。下载完成后会通过 webhook 通知 API。
+qBittorrent 的 Web UI 将通过 <http://localhost:8081> 访问，以避免与网关端口冲突。
 
 ### 5. 手动部署 transcode 节点
 
