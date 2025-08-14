@@ -43,4 +43,24 @@ mkdir -p \
   "$DATA_DIR/rclone"
 
 # Deploy services
-docker compose -f compose.serve.yml -f compose.transcode.yml up -d
+echo "Select deployment option:"
+echo "1) server"
+echo "2) transcode"
+echo "3) both"
+read -p "Enter choice [1-3]: " choice
+
+case "$choice" in
+  1)
+    docker compose -f compose.serve.yml up -d
+    ;;
+  2)
+    docker compose -f compose.transcode.yml up -d
+    ;;
+  3)
+    docker compose -f compose.serve.yml -f compose.transcode.yml up -d
+    ;;
+  *)
+    echo "Invalid choice. Exiting."
+    exit 1
+    ;;
+esac
