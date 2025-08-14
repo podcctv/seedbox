@@ -280,7 +280,7 @@ WEB_PUBLIC_BASE=https://seedbox.example.com
 * [x] qB 完成回调脚本 `/scripts/on-complete.sh "%I" "%N" "%R"`，指向 `/webhooks/fetcher_done`
 * [x] Worker 容器：FFmpeg 命令封装；读 inbox，出 outbox，rclone 回传 MinIO
 * [x] App DB 初始化迁移（users/items/actors/tags/jobs）
-* [ ] 后台配置 UI：保存到 App DB，并支持热更新/重载
+* [x] 后台配置 UI：保存到 App DB，并支持热更新/重载
 * [x] 备份脚本：`pg_dump` → MinIO；`rclone sync` → 备份 bucket
 * [x] 基本审计日志（登录、创建任务、播放、删除）
 
@@ -290,7 +290,7 @@ WEB_PUBLIC_BASE=https://seedbox.example.com
 
 * [ ] 未登录访问 `/hls/…` → 401；访问 `/previews/…` → 200
 * [ ] 一条端到端流程可跑通：检索 → 受控下载 → 回调 → 传 CPU → 生成预览 & HLS → 回传 MinIO → 展示
-* [ ] 管理页可修改连接信息（只读 DSN/S3/下载引擎/FFmpeg 预设等）并生效
+* [x] 管理页可修改连接信息（只读 DSN/S3/下载引擎/FFmpeg 预设等）并生效
 * [ ] 重建容器后数据保持（DB/S3/配置/qB 下载目录）
 * [ ] OpenAPI 文档与 README 指令完整，CI 构建通过
 

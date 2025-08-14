@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 import logging
 
+from .config import AppConfig, init_db, load_config, save_config
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("audit")
 
@@ -14,6 +16,9 @@ security = HTTPBearer()
 
 FAKE_TOKEN = "fake-jwt"
 TOKEN_EXP_HOURS = 72
+
+init_db()
+current_config = load_config()
 
 
 class LoginRequest(BaseModel):
@@ -70,6 +75,19 @@ async def tasks_fetch(task: FetchTask, _: bool = Depends(verify_token)):
         raise HTTPException(status_code=400, detail="infohash or uri required")
     logger.info("task.fetch infohash=%s uri=%s", task.infohash, task.uri)
     return {"status": "queued"}
+
+
+@app.get("/admin/config", response_model=AppConfig)
+async def get_config(_: bool = Depends(verify_token)):
+    return current_config
+
+
+@app.put("/admin/config", response_model=AppConfig)
+async def update_config(cfg: AppConfig, _: bool = Depends(verify_token)):
+    global current_config
+    save_config(cfg)
+    current_config = cfg
+    return current_config
 
 
 @app.get("/items/{item_id}")

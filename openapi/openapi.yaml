@@ -97,6 +97,43 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       security:
       - HTTPBearer: []
+  /admin/config:
+    get:
+      summary: Get Config
+      operationId: get_config_admin_config_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppConfig'
+      security:
+      - HTTPBearer: []
+    put:
+      summary: Update Config
+      operationId: update_config_admin_config_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppConfig'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppConfig'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
   /items/{item_id}:
     get:
       summary: Get Item
@@ -271,6 +308,19 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
+    AppConfig:
+      properties:
+        download_dir:
+          type: string
+          title: Download Dir
+          default: /downloads
+        ffmpeg_preset:
+          type: string
+          title: Ffmpeg Preset
+          default: fast
+      type: object
+      title: AppConfig
+      description: Application configuration stored in the database.
     FetchTask:
       properties:
         infohash:
