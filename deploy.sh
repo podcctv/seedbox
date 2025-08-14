@@ -7,7 +7,16 @@ cd "$REPO_DIR"
 # Update repository
 if [ -d .git ]; then
   echo "Updating repository..."
+  if [ -n "$(git status --porcelain)" ]; then
+    echo "Stashing local changes..."
+    git stash push --include-untracked
+    STASHED=1
+  fi
   git pull --rebase
+  if [ "${STASHED:-0}" -eq 1 ]; then
+    echo "Restoring local changes..."
+    git stash pop || true
+  fi
 fi
 
 # Create .env if missing
