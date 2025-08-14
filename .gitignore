@@ -8,3 +8,4 @@ web/.next/
 *.pyo
 *.pyd
 openapi/openapi.json
+app.db
