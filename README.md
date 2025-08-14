@@ -1,8 +1,8 @@
-# MediaHub（Seedbox）双机部署指南
+# MediaHub（Seedbox）双端部署教程
 
 ## 项目简介
 
-MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统。它通过只读连接 BitMagnet Next Web 的 Postgres 数据库完成元数据检索，并在双机协作下完成下载、转码、预览与展示。
+MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统。它通过只读连接 BitMagnet Next Web 的 Postgres 数据库完成元数据检索，并在双端协作下完成下载、转码、预览与展示。
 
 ### 需求概述
 
@@ -13,7 +13,7 @@ MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统�
 - **权限控制**：未登录用户仅能浏览预览图，登录后才可播放和管理内容；管理员可创建任务与编辑配置。
 - **后台配置**：服务器 IP、端口、存储等参数均可在后台页面修改。
 
-## 从零开始的双机部署
+## 从零开始的双端部署
 
 > 以下示例以 `serve` 节点（负责下载、展示）和 `transcode` 节点（负责转码）为例。两台机器需能够互相访问（建议在同一内网或使用 VPN）。
 
@@ -21,6 +21,7 @@ MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统�
 
 1. 在两台机器上安装 [Docker](https://docs.docker.com/engine/install/) 与 [Docker Compose](https://docs.docker.com/compose/install/).
 2. 确保已部署 [BitMagnet Next Web](https://github.com/journey-ad/Bitmagnet-Next-Web)，并拥有其 Postgres 只读连接串。
+3. 如果希望持久化数据，可在 `.env` 中自定义 `DATA_DIR` 指向挂载目录。
 
 ### 2. 克隆代码并配置环境变量
 
@@ -46,7 +47,17 @@ MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统�
     - **transcode 节点专用**
       - 目前无额外变量，确保已填写以上共同配置。
 
-### 3. 部署 serve 节点
+### 3. 使用部署脚本快速启动
+
+项目提供 `deploy.sh` 一键部署脚本，可在两端直接运行：
+
+```bash
+bash deploy.sh
+```
+
+根据提示选择 `server`（serve 节点）、`transcode`（transcode 节点）或 `both`（单机双端）。脚本会自动创建数据目录并启动对应的 Docker Compose 服务。
+
+### 4. 手动部署 serve 节点
 
 1. 在 serve 节点上确认 `.env` 已填写共同配置和 serve 专用变量。
 2. 启动服务：
@@ -57,7 +68,7 @@ MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统�
 
 该节点包含 Web 前端、API、Postgres、MinIO、Redis 以及 qBittorrent 下载引擎。下载完成后会通过 webhook 通知 API。
 
-### 4. 部署 transcode 节点
+### 5. 手动部署 transcode 节点
 
 1. 在 transcode 节点上确认 `.env` 已填写共同配置。
 2. 启动服务：
@@ -68,7 +79,7 @@ MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统�
 
 该节点运行 FFmpeg Worker 和 rclone，负责从 serve 节点拉取下载文件，生成 HLS 切片及预览图后上传至 MinIO。
 
-### 5. 初始化与访问
+### 6. 初始化与访问
 
 1. 首次启动后，通过后台管理页面完成服务器地址、对象存储、下载引擎等配置。
 2. 访问 `https://<WEB_PUBLIC_BASE>`，默认仅能查看预览图。登录后可播放、收藏或删除。
