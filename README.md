@@ -27,7 +27,7 @@ MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统�
 1. 在两台机器上拉取代码并复制环境变量模板：
 
     ```bash
-    git clone https://github.com/your-org/seedbox.git
+    git clone https://github.com/podcctv/seedbox.git
     cd seedbox
     cp .env.example .env
     ```
