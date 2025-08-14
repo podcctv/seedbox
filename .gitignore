@@ -1,5 +1,9 @@
 __pycache__/
 .env
+node_modules/
+web/node_modules/
+.next/
+web/.next/
 *.pyc
 *.pyo
 *.pyd
