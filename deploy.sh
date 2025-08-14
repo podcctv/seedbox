@@ -30,7 +30,20 @@ set -a
 source .env
 set +a
 
-export DATA_DIR=${DATA_DIR:-/opt/seedbox}
+# Prompt for persistent data directory
+default_dir=${DATA_DIR:-/opt/seedbox}
+read -p "Enter data directory [${default_dir}]: " DATA_DIR_INPUT
+DATA_DIR=${DATA_DIR_INPUT:-$default_dir}
+export DATA_DIR
+
+# Persist the chosen directory in .env
+if [ -f .env ]; then
+  if grep -q '^DATA_DIR=' .env; then
+    sed -i "s|^DATA_DIR=.*|DATA_DIR=$DATA_DIR|" .env
+  else
+    echo "DATA_DIR=$DATA_DIR" >> .env
+  fi
+fi
 
 mkdir -p \
   "$DATA_DIR/redis" \
