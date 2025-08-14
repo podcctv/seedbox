@@ -100,15 +100,15 @@ read -p "Enter choice [1-3]: " choice
 case "$choice" in
   1)
     serve_compose=$(prepare_compose_with_free_ports compose.serve.yml)
-    docker compose -f "$serve_compose" up -d
+    docker compose --project-directory "$REPO_DIR" -f "$serve_compose" up -d
     rm "$serve_compose"
     ;;
   2)
-    docker compose -f compose.transcode.yml up -d
+    docker compose --project-directory "$REPO_DIR" -f compose.transcode.yml up -d
     ;;
   3)
     serve_compose=$(prepare_compose_with_free_ports compose.serve.yml)
-    docker compose -f "$serve_compose" -f compose.transcode.yml up -d
+    docker compose --project-directory "$REPO_DIR" -f "$serve_compose" -f compose.transcode.yml up -d
     rm "$serve_compose"
     ;;
   *)
