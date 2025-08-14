@@ -37,6 +37,20 @@ services:
       - minio-data:/data
     ports:
       - "9000:9000"
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - WEBUI_PORT=8080
+    volumes:
+      - qb-conf:/config
+      - qb-downloads:/downloads
+      - ./scripts:/scripts:ro
+    restart: unless-stopped
 volumes:
   app-postgres-data:
   minio-data:
+  qb-conf:
+  qb-downloads:
