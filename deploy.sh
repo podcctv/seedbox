@@ -30,7 +30,7 @@ set -a
 source .env
 set +a
 
-DATA_DIR=${DATA_DIR:-/opt/seedbox}
+export DATA_DIR=${DATA_DIR:-/opt/seedbox}
 
 mkdir -p \
   "$DATA_DIR/redis" \

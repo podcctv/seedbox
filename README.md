@@ -35,7 +35,10 @@ MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统�
 
 2. 根据节点类型编辑 `.env`：
 
+    模板已预设 Redis、MinIO 等默认配置，可直接使用或按需修改。
+
     - **共同配置**（两台机器都需要）
+      - `DATA_DIR`：持久化数据目录，默认 `/opt/seedbox`。
       - `MINIO_ENDPOINT`、`MINIO_ACCESS_KEY`、`MINIO_SECRET_KEY`、`MINIO_BUCKET_PREVIEWS`、`MINIO_BUCKET_HLS`：对象存储 MinIO 信息。
     - **serve 节点专用**（仅在下载/展示节点填写）
       - `APP_DB_NAME`、`APP_DB_USER`、`APP_DB_PASS`、`APP_DB_HOST`、`APP_DB_PORT`：内部数据库。
