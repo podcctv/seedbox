@@ -4,11 +4,14 @@ set -e
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
+declare -A RESERVED_PORTS=()
+
 find_free_port() {
   local port=$1
-  while nc -z localhost "$port" >/dev/null 2>&1; do
+  while nc -z localhost "$port" >/dev/null 2>&1 || [[ -n "${RESERVED_PORTS[$port]}" ]]; do
     port=$((port+1))
   done
+  RESERVED_PORTS[$port]=1
   echo "$port"
 }
 
@@ -16,6 +19,7 @@ prepare_compose_with_free_ports() {
   local src=$1
   local dest=$(mktemp)
   cp "$src" "$dest"
+  RESERVED_PORTS=()
   while IFS= read -r line; do
     if [[ $line =~ \"([0-9]+):([0-9]+)\" ]]; then
       host_port="${BASH_REMATCH[1]}"
