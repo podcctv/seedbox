@@ -65,7 +65,7 @@ else:
     print("Service port mappings:")
     for name, host, container in ports:
         print(f"  {host} -> {name} (container {container})")
-    web = next((host for name, host, _ in ports if name == 'gateway'), None)
+    web = next((host for name, host, _ in ports if name in ['gateway', 'bitmagnet-next-web']), None)
     if web:
         print(f"Web interface available at http://localhost:{web}")
     else:
@@ -161,6 +161,7 @@ set +a
 mkdir -p \
   "$DATA_DIR/redis" \
   "$DATA_DIR/app-postgres" \
+  "$DATA_DIR/bitmagnet-postgres" \
   "$DATA_DIR/minio" \
   "$DATA_DIR/qbittorrent/config" \
   "$DATA_DIR/qbittorrent/downloads" \

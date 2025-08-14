@@ -4,18 +4,10 @@ services:
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000
     volumes:
       - ./:/app
-    ports:
-      - "8000:8000"
     environment:
       - PYTHONPATH=/app
-  gateway:
-    image: nginx:1.25-alpine
-    depends_on:
-      - api
-    volumes:
-      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      - "8080:80"
+      - "8000:8000"
   redis:
     image: redis:7
     volumes:
@@ -51,4 +43,48 @@ services:
       - ./scripts:/scripts:ro
     ports:
       - "8081:8080"
+    restart: unless-stopped
+
+  bitmagnet-postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_PASSWORD=${BITMAGNET_DB_PASS}
+      - POSTGRES_DB=${BITMAGNET_DB_NAME}
+      - PGUSER=${BITMAGNET_DB_USER}
+    volumes:
+      - ${DATA_DIR}/bitmagnet-postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+    shm_size: 1g
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready
+      start_period: 20s
+      interval: 10s
+
+  bitmagnet:
+    image: ghcr.io/bitmagnet-io/bitmagnet:latest
+    environment:
+      - POSTGRES_HOST=bitmagnet-postgres
+      - POSTGRES_PASSWORD=${BITMAGNET_DB_PASS}
+    command:
+      - worker
+      - run
+      - --keys=http_server
+      - --keys=queue_server
+      - --keys=dht_crawler
+    depends_on:
+      bitmagnet-postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  bitmagnet-next-web:
+    image: journey0ad/bitmagnet-next-web:latest
+    environment:
+      - POSTGRES_DB_URL=postgres://${BITMAGNET_DB_USER}:${BITMAGNET_DB_PASS}@bitmagnet-postgres:5432/${BITMAGNET_DB_NAME}
+    ports:
+      - "3000:3000"
+    depends_on:
+      bitmagnet-postgres:
+        condition: service_healthy
     restart: unless-stopped
