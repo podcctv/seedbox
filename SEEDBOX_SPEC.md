@@ -301,6 +301,3 @@ WEB_PUBLIC_BASE=https://seedbox.example.com
 * 任何“获取/分发”动作仅用于**授权内容**；下载引擎 Web UI 与 API 均不暴露公网。
 * 如需多清晰度自适应，后续在 Worker 增加 ABR 多码率 HLS（`-var_stream_map`）。
 
----
-
-> 将本文件保存为项目根目录的 `README.md` 或 `SEEDBOX_SPEC.md`，然后让 Codex 按“任务清单（Codex TODO）”生成与完善代码即可。
