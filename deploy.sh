@@ -17,7 +17,7 @@ prepare_compose_with_free_ports() {
   local dest=$(mktemp)
   cp "$src" "$dest"
   while IFS= read -r line; do
-    if [[ $line =~ -\ "([0-9]+):([0-9]+)" ]]; then
+    if [[ $line =~ \"([0-9]+):([0-9]+)\" ]]; then
       host_port="${BASH_REMATCH[1]}"
       container_port="${BASH_REMATCH[2]}"
       free_port=$(find_free_port "$host_port")
