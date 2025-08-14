@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   worker-ffmpeg:
     image: jrottenberg/ffmpeg:4.4-alpine

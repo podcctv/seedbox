@@ -30,7 +30,19 @@ prepare_compose_with_free_ports() {
   echo "$dest"
 }
 
+ensure_pyyaml() {
+  python3 -c "import yaml" >/dev/null 2>&1 && return
+  echo "PyYAML module not found. Attempting to install..." >&2
+  if python3 -m pip install --user PyYAML >/dev/null 2>&1; then
+    echo "PyYAML installed." >&2
+  else
+    echo "Failed to install PyYAML. Port information will not be displayed." >&2
+    return 1
+  fi
+}
+
 display_ports() {
+  ensure_pyyaml || return
   python3 - "$@" <<'PY'
 import sys, yaml
 ports = []
