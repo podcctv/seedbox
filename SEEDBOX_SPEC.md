@@ -276,7 +276,7 @@ WEB_PUBLIC_BASE=https://seedbox.example.com
 * [x] API 项目脚手架（FastAPI / NestJS 二选一），实现本规范最小接口集
 * [x] OpenAPI 文档 `openapi.yaml` 自动导出
 * [ ] Web 前端（Next.js）页面与路由；主题暗色；HLS 播放用 `hls.js`
-* [ ] Nginx 网关与 `auth_request` 配置；仅 `/previews/*` 允许匿名
+* [x] Nginx 网关与 `auth_request` 配置；仅 `/previews/*` 允许匿名
 * [x] qB 完成回调脚本 `/scripts/on-complete.sh "%I" "%N" "%R"`，指向 `/webhooks/fetcher_done`
 * [x] Worker 容器：FFmpeg 命令封装；读 inbox，出 outbox，rclone 回传 MinIO
 * [x] App DB 初始化迁移（users/items/actors/tags/jobs）
