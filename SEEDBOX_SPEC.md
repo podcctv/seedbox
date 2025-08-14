@@ -272,17 +272,17 @@ WEB_PUBLIC_BASE=https://seedbox.example.com
 
 ## 13. 任务清单（Codex TODO）
 
-* [ ] 生成 `compose.serve.yml` 与 `compose.transcode.yml`（含卷/网络/依赖）
-* [ ] API 项目脚手架（FastAPI / NestJS 二选一），实现本规范最小接口集
-* [ ] OpenAPI 文档 `openapi.yaml` 自动导出
+* [x] 生成 `compose.serve.yml` 与 `compose.transcode.yml`（含卷/网络/依赖）
+* [x] API 项目脚手架（FastAPI / NestJS 二选一），实现本规范最小接口集
+* [x] OpenAPI 文档 `openapi.yaml` 自动导出
 * [ ] Web 前端（Next.js）页面与路由；主题暗色；HLS 播放用 `hls.js`
 * [ ] Nginx 网关与 `auth_request` 配置；仅 `/previews/*` 允许匿名
-* [ ] qB 完成回调脚本 `/scripts/on-complete.sh "%I" "%N" "%R"`，指向 `/webhooks/fetcher_done`
-* [ ] Worker 容器：FFmpeg 命令封装；读 inbox，出 outbox，rclone 回传 MinIO
-* [ ] App DB 初始化迁移（users/items/actors/tags/jobs）
+* [x] qB 完成回调脚本 `/scripts/on-complete.sh "%I" "%N" "%R"`，指向 `/webhooks/fetcher_done`
+* [x] Worker 容器：FFmpeg 命令封装；读 inbox，出 outbox，rclone 回传 MinIO
+* [x] App DB 初始化迁移（users/items/actors/tags/jobs）
 * [ ] 后台配置 UI：保存到 App DB，并支持热更新/重载
-* [ ] 备份脚本：`pg_dump` → MinIO；`rclone sync` → 备份 bucket
-* [ ] 基本审计日志（登录、创建任务、播放、删除）
+* [x] 备份脚本：`pg_dump` → MinIO；`rclone sync` → 备份 bucket
+* [x] 基本审计日志（登录、创建任务、播放、删除）
 
 ---
 
