@@ -3,13 +3,11 @@ services:
   worker-ffmpeg:
     image: jrottenberg/ffmpeg:4.4-alpine
     volumes:
-      - ./worker/inbox:/inbox
-      - ./worker/outbox:/outbox
+      - ${DATA_DIR}/worker/inbox:/inbox
+      - ${DATA_DIR}/worker/outbox:/outbox
   rclone-agent:
     image: rclone/rclone
     command: "rclone sync /outbox minio:"
     volumes:
-      - ./worker/outbox:/outbox
-      - rclone-config:/config/rclone
-volumes:
-  rclone-config:
+      - ${DATA_DIR}/worker/outbox:/outbox
+      - ${DATA_DIR}/rclone:/config/rclone
