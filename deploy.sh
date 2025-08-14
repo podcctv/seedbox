@@ -4,6 +4,32 @@ set -e
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
+find_free_port() {
+  local port=$1
+  while nc -z localhost "$port" >/dev/null 2>&1; do
+    port=$((port+1))
+  done
+  echo "$port"
+}
+
+prepare_compose_with_free_ports() {
+  local src=$1
+  local dest=$(mktemp)
+  cp "$src" "$dest"
+  while IFS= read -r line; do
+    if [[ $line =~ -\ "([0-9]+):([0-9]+)" ]]; then
+      host_port="${BASH_REMATCH[1]}"
+      container_port="${BASH_REMATCH[2]}"
+      free_port=$(find_free_port "$host_port")
+      if [ "$free_port" != "$host_port" ]; then
+        echo "Port $host_port is in use. Using $free_port instead."
+        sed -i "s/${host_port}:${container_port}/${free_port}:${container_port}/" "$dest"
+      fi
+    fi
+  done < "$src"
+  echo "$dest"
+}
+
 # Update repository
 if [ -d .git ]; then
   echo "Updating repository..."
@@ -73,13 +99,17 @@ read -p "Enter choice [1-3]: " choice
 
 case "$choice" in
   1)
-    docker compose -f compose.serve.yml up -d
+    serve_compose=$(prepare_compose_with_free_ports compose.serve.yml)
+    docker compose -f "$serve_compose" up -d
+    rm "$serve_compose"
     ;;
   2)
     docker compose -f compose.transcode.yml up -d
     ;;
   3)
-    docker compose -f compose.serve.yml -f compose.transcode.yml up -d
+    serve_compose=$(prepare_compose_with_free_ports compose.serve.yml)
+    docker compose -f "$serve_compose" -f compose.transcode.yml up -d
+    rm "$serve_compose"
     ;;
   *)
     echo "Invalid choice. Exiting."
