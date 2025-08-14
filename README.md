@@ -47,6 +47,39 @@ MediaHub 是一个面向自有/授权媒体内容的受控获取与展示系统�
     - **transcode 节点专用**
       - 目前无额外变量，确保已填写以上共同配置。
 
+### MinIO Docker Compose 部署示例
+
+若尚未部署 MinIO，可使用以下 `docker compose` 示例快速启动一个对象存储服务，并与上述环境变量配合使用：
+
+```yaml
+version: "3.8"
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: CHANGE_ME
+      MINIO_ROOT_PASSWORD: CHANGE_ME
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./minio-data:/data
+```
+
+对应的 `.env` 配置：
+
+```bash
+MINIO_ENDPOINT=http://minio:9000
+MINIO_ACCESS_KEY=CHANGE_ME
+MINIO_SECRET_KEY=CHANGE_ME
+MINIO_BUCKET_PREVIEWS=previews
+MINIO_BUCKET_HLS=hls
+```
+
+启动后可在 `http://localhost:9001` 访问控制台并创建 `previews` 与 `hls` 两个桶。
+
 ### 3. 使用部署脚本快速启动
 
 项目提供 `deploy.sh` 一键部署脚本，可在两端直接运行：
