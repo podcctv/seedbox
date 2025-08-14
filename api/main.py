@@ -3,6 +3,10 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from typing import Optional
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("audit")
 
 app = FastAPI(title="MediaHub API")
 
@@ -38,6 +42,7 @@ async def auth_login(payload: LoginRequest):
     # NOTE: This is a stub implementation. Replace with real authentication.
     role = "admin" if payload.username == "admin" else "user"
     exp = datetime.utcnow() + timedelta(hours=TOKEN_EXP_HOURS)
+    logger.info("login username=%s role=%s", payload.username, role)
     return LoginResponse(token=FAKE_TOKEN, role=role, exp=exp)
 
 
@@ -63,12 +68,14 @@ async def tasks_fetch(task: FetchTask, _: bool = Depends(verify_token)):
     # Stub: accept task and return queued status
     if not (task.infohash or task.uri):
         raise HTTPException(status_code=400, detail="infohash or uri required")
+    logger.info("task.fetch infohash=%s uri=%s", task.infohash, task.uri)
     return {"status": "queued"}
 
 
 @app.get("/items/{item_id}")
 async def get_item(item_id: str):
     # Stub item retrieval
+    logger.info("play item=%s", item_id)
     return {"id": item_id, "title": "Sample Item"}
 
 
@@ -79,6 +86,7 @@ async def favorite_item(item_id: str, _: bool = Depends(verify_token)):
 
 @app.delete("/items/{item_id}")
 async def delete_item(item_id: str, _: bool = Depends(verify_token)):
+    logger.info("delete item=%s", item_id)
     return {"id": item_id, "deleted": True}
 
 
