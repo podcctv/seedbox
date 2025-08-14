@@ -115,6 +115,18 @@ configure_env() {
       fi
       local prompt="${current:-$default}"
       read -p "Enter value for $var [$prompt]: " value
+      # Allow the user to paste full VAR=VALUE lines. If the name doesn't
+      # match the expected variable, fall back to the default so we don't end
+      # up with confusing assignments like DATA_DIR=MINIO_ENDPOINT=...
+      if [[ "$value" == *=* ]]; then
+        input_var="${value%%=*}"
+        if [[ "$input_var" == "$var" ]]; then
+          value="${value#*=}"
+        else
+          echo "Input contained assignment for $input_var while prompting for $var; using default." >&2
+          value=""
+        fi
+      fi
       value=${value:-$prompt}
       echo "$var=$value" >> "$tmp"
     fi
