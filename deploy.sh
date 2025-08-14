@@ -22,7 +22,7 @@ prepare_compose_with_free_ports() {
       container_port="${BASH_REMATCH[2]}"
       free_port=$(find_free_port "$host_port")
       if [ "$free_port" != "$host_port" ]; then
-        echo "Port $host_port is in use. Using $free_port instead."
+        echo "Port $host_port is in use. Using $free_port instead." >&2
         sed -i "s/${host_port}:${container_port}/${free_port}:${container_port}/" "$dest"
       fi
     fi
