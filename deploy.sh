@@ -9,49 +9,6 @@ if [ -f "$CONFIG_FILE" ]; then
   source "$CONFIG_FILE"
 fi
 
-prompt_for_port() {
-  local host_port=$1
-  local container_port=$2
-  local service=$3
-  local port=$host_port
-  while nc -z localhost "$port" >/dev/null 2>&1; do
-    if [ -t 2 ]; then
-      read -p "Port $port is in use. Enter a new port for service $service (container $container_port): " port < /dev/tty
-    else
-      echo "Port $port is in use for service $service and no TTY is available to choose a new one." >&2
-      return 1
-    fi
-  done
-  echo "$port"
-}
-
-prepare_compose_with_port_prompts() {
-  local src=$1
-  local dest=$(mktemp)
-  cp "$src" "$dest"
-  local current_service=""
-  while IFS= read -r line; do
-    if [[ $line =~ ^[[:space:]]{2}([A-Za-z0-9_-]+):[[:space:]]*$ ]]; then
-      current_service="${BASH_REMATCH[1]}"
-    elif [[ $line =~ \"([0-9]+):([0-9]+)\" ]]; then
-      local default_host="${BASH_REMATCH[1]}"
-      local container_port="${BASH_REMATCH[2]}"
-      local var_name="PORT_${current_service//-/_}_${container_port}"
-      local existing_port="${!var_name}"
-      if [ -n "$existing_port" ]; then
-        new_port="$existing_port"
-      else
-        new_port=$(prompt_for_port "$default_host" "$container_port" "$current_service") || return 1
-      fi
-      eval "$var_name=\"$new_port\""
-      if [ "$new_port" != "$default_host" ]; then
-        sed -i "s/${default_host}:${container_port}/${new_port}:${container_port}/" "$dest"
-      fi
-    fi
-  done < "$src"
-  echo "$dest"
-}
-
 ensure_pyyaml() {
   python3 -c "import yaml" >/dev/null 2>&1 && return
   echo "PyYAML module not found. Attempting to install..." >&2
@@ -66,7 +23,8 @@ ensure_pyyaml() {
 display_ports() {
   ensure_pyyaml || return
   python3 - "$@" <<'PY'
-import sys, yaml
+import sys, yaml, os
+host_addr = os.environ.get("HOST_ADDR", "localhost")
 ports = []
 for file in sys.argv[1:]:
     with open(file) as f:
@@ -86,7 +44,7 @@ else:
     web_services = ['web', 'gateway']
     web = next((host for svc in web_services for name, host, _ in ports if name == svc), None)
     if web:
-        print(f"Web interface available at http://localhost:{web}")
+        print(f"Web interface available at http://{host_addr}:{web}")
     else:
         print("No web interface exposed.")
     trans = next((host for name, host, _ in ports if name.startswith('worker') or 'transcode' in name), None)
@@ -146,6 +104,10 @@ if [[ "$DATA_DIR" != /* ]]; then
   DATA_DIR="/$DATA_DIR"
 fi
 export DATA_DIR
+
+HOST_ADDR=$(hostname -I | awk '{print $1}')
+export HOST_ADDR
+export NEXT_PUBLIC_API_BASE_URL="http://${HOST_ADDR}:28000"
 
 if [ "$choice" = "4" ]; then
   docker compose --project-directory "$REPO_DIR" -f compose.serve.yml -f compose.transcode.yml down
@@ -227,20 +189,16 @@ mkdir -p \
 
 case "$choice" in
   1)
-    serve_compose=$(prepare_compose_with_port_prompts compose.serve.yml)
-    docker compose --project-directory "$REPO_DIR" -f "$serve_compose" up -d
-    display_ports "$serve_compose"
-    rm "$serve_compose"
+    docker compose --project-directory "$REPO_DIR" -f compose.serve.yml up -d
+    display_ports compose.serve.yml
     ;;
   2)
     docker compose --project-directory "$REPO_DIR" -f compose.transcode.yml up -d
     display_ports compose.transcode.yml
     ;;
   3)
-    serve_compose=$(prepare_compose_with_port_prompts compose.serve.yml)
-    docker compose --project-directory "$REPO_DIR" -f "$serve_compose" -f compose.transcode.yml up -d
-    display_ports "$serve_compose" compose.transcode.yml
-    rm "$serve_compose"
+    docker compose --project-directory "$REPO_DIR" -f compose.serve.yml -f compose.transcode.yml up -d
+    display_ports compose.serve.yml compose.transcode.yml
     ;;
   *)
     echo "Invalid choice. Exiting."
@@ -255,8 +213,5 @@ if [ ! -f "$CONFIG_FILE" ]; then
     echo "BITMAGNET_DB_USER=$BITMAGNET_DB_USER"
     echo "BITMAGNET_DB_PASS=$BITMAGNET_DB_PASS"
     echo "BITMAGNET_DB_NAME=$BITMAGNET_DB_NAME"
-    for var in $(compgen -A variable | grep '^PORT_'); do
-      echo "$var=${!var}"
-    done
   } > "$CONFIG_FILE"
 fi
