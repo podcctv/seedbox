@@ -7,12 +7,13 @@ cd "$REPO_DIR"
 prompt_for_port() {
   local host_port=$1
   local container_port=$2
+  local service=$3
   local port=$host_port
   while nc -z localhost "$port" >/dev/null 2>&1; do
     if [ -t 2 ]; then
-      read -p "Port $port is in use. Enter a new port for $container_port: " port < /dev/tty
+      read -p "Port $port is in use. Enter a new port for service $service (container $container_port): " port < /dev/tty
     else
-      echo "Port $port is in use and no TTY is available to choose a new one." >&2
+      echo "Port $port is in use for service $service and no TTY is available to choose a new one." >&2
       return 1
     fi
   done
@@ -23,11 +24,14 @@ prepare_compose_with_port_prompts() {
   local src=$1
   local dest=$(mktemp)
   cp "$src" "$dest"
+  local current_service=""
   while IFS= read -r line; do
-    if [[ $line =~ \"([0-9]+):([0-9]+)\" ]]; then
+    if [[ $line =~ ^[[:space:]]{2}([A-Za-z0-9_-]+):[[:space:]]*$ ]]; then
+      current_service="${BASH_REMATCH[1]}"
+    elif [[ $line =~ \"([0-9]+):([0-9]+)\" ]]; then
       host_port="${BASH_REMATCH[1]}"
       container_port="${BASH_REMATCH[2]}"
-      new_port=$(prompt_for_port "$host_port" "$container_port") || return 1
+      new_port=$(prompt_for_port "$host_port" "$container_port" "$current_service") || return 1
       if [ "$new_port" != "$host_port" ]; then
         sed -i "s/${host_port}:${container_port}/${new_port}:${container_port}/" "$dest"
       fi
