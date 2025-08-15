@@ -4,6 +4,11 @@ set -e
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
+CONFIG_FILE="$REPO_DIR/deploy.conf"
+if [ -f "$CONFIG_FILE" ]; then
+  source "$CONFIG_FILE"
+fi
+
 prompt_for_port() {
   local host_port=$1
   local container_port=$2
@@ -29,11 +34,18 @@ prepare_compose_with_port_prompts() {
     if [[ $line =~ ^[[:space:]]{2}([A-Za-z0-9_-]+):[[:space:]]*$ ]]; then
       current_service="${BASH_REMATCH[1]}"
     elif [[ $line =~ \"([0-9]+):([0-9]+)\" ]]; then
-      host_port="${BASH_REMATCH[1]}"
-      container_port="${BASH_REMATCH[2]}"
-      new_port=$(prompt_for_port "$host_port" "$container_port" "$current_service") || return 1
-      if [ "$new_port" != "$host_port" ]; then
-        sed -i "s/${host_port}:${container_port}/${new_port}:${container_port}/" "$dest"
+      local default_host="${BASH_REMATCH[1]}"
+      local container_port="${BASH_REMATCH[2]}"
+      local var_name="PORT_${current_service//-/_}_${container_port}"
+      local existing_port="${!var_name}"
+      if [ -n "$existing_port" ]; then
+        new_port="$existing_port"
+      else
+        new_port=$(prompt_for_port "$default_host" "$container_port" "$current_service") || return 1
+      fi
+      eval "$var_name=\"$new_port\""
+      if [ "$new_port" != "$default_host" ]; then
+        sed -i "s/${default_host}:${container_port}/${new_port}:${container_port}/" "$dest"
       fi
     fi
   done < "$src"
@@ -103,6 +115,22 @@ if [ -d .git ]; then
     echo "No upstream configured for current branch. Skipping pull."
   fi
 fi
+
+echo "Select deployment option:"
+echo "1) server"
+echo "2) transcode"
+echo "3) both"
+echo "4) uninstall"
+if [ -z "${DEPLOY_CHOICE}" ]; then
+  if [ -t 0 ]; then
+    read -p "Enter choice [1-4]: " choice
+  else
+    choice=1
+  fi
+else
+  choice=${DEPLOY_CHOICE}
+fi
+
 # Prompt for persistent data directory. Allow preset DATA_DIR or non-interactive defaults.
 if [ -z "${DATA_DIR}" ]; then
   if [ -t 0 ]; then
@@ -113,6 +141,11 @@ if [ -z "${DATA_DIR}" ]; then
   fi
 fi
 export DATA_DIR
+
+if [ "$choice" = "4" ]; then
+  docker compose --project-directory "$REPO_DIR" -f compose.serve.yml -f compose.transcode.yml down
+  exit 0
+fi
 
 # Configure external Bitmagnet Postgres connection
 echo "Configure Bitmagnet Postgres connection:"
@@ -178,21 +211,6 @@ mkdir -p \
   "$DATA_DIR/worker/outbox" \
   "$DATA_DIR/rclone"
 
-# Deploy services
-echo "Select deployment option:"
-echo "1) server"
-echo "2) transcode"
-echo "3) both"
-if [ -z "${DEPLOY_CHOICE}" ]; then
-  if [ -t 0 ]; then
-    read -p "Enter choice [1-3]: " choice
-  else
-    choice=1
-  fi
-else
-  choice=${DEPLOY_CHOICE}
-fi
-
 case "$choice" in
   1)
     serve_compose=$(prepare_compose_with_port_prompts compose.serve.yml)
@@ -215,3 +233,16 @@ case "$choice" in
     exit 1
     ;;
 esac
+
+if [ ! -f "$CONFIG_FILE" ]; then
+  {
+    echo "BITMAGNET_DB_HOST=$BITMAGNET_DB_HOST"
+    echo "BITMAGNET_DB_PORT=$BITMAGNET_DB_PORT"
+    echo "BITMAGNET_DB_USER=$BITMAGNET_DB_USER"
+    echo "BITMAGNET_DB_PASS=$BITMAGNET_DB_PASS"
+    echo "BITMAGNET_DB_NAME=$BITMAGNET_DB_NAME"
+    for var in $(compgen -A variable | grep '^PORT_'); do
+      echo "$var=${!var}"
+    done
+  } > "$CONFIG_FILE"
+fi
