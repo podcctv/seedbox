@@ -218,7 +218,6 @@ echo "Sample content query successful."
 export BITMAGNET_RO_DSN="postgresql://${BITMAGNET_DB_USER}:${BITMAGNET_DB_PASS}@${BITMAGNET_DB_HOST}:${BITMAGNET_DB_PORT}/${BITMAGNET_DB_NAME}"
 
 mkdir -p \
-  "$DATA_DIR/redis" \
   "$DATA_DIR/app-postgres" \
   "$DATA_DIR/minio" \
   "$DATA_DIR/qbittorrent/config" \

@@ -29,7 +29,7 @@
 
 **节点与服务**
 
-* **展示节点（A）**：`gateway(Nginx|Traefik)`、`web(Next.js)`、`api(FastAPI|Node)`、`app-postgres`、`redis`、`minio`、`fetcher(qBittorrent-nox)`
+* **展示节点（A）**：`gateway(Nginx|Traefik)`、`web(Next.js)`、`api(FastAPI|Node)`、`app-postgres`、`minio`、`fetcher(qBittorrent-nox)`
 * **处理节点（B）**：`worker-ffmpeg`、`rclone-agent`（与 MinIO 交互）
 * **外部只读依赖**：`bitmagnet_pg_ro`（Bitmagnet Next Web 的 Postgres 只读连接）
 
@@ -43,7 +43,7 @@
 * **对象存储**：MinIO（S3 兼容），存放预览图（sprites）与 HLS 切片
 * **转码**：FFmpeg（HLS + 预览拼图/场景抽帧）
 * **数据库**：Postgres（App DB）；**另有** Bitmagnet Postgres（只读）
-* **队列/缓存**：Redis（RQ/BullMQ）
+* **队列/缓存**：无（直接调用）
 * **反代/鉴权**：Nginx（`auth_request` → API 校验 JWT）
 
 ---
@@ -144,7 +144,6 @@ jobs(id UUID PK, item_id UUID FK, stage TEXT, status TEXT, payload JSONB, log TE
 # 仅示例，生成器需产出真实 compose 文件
 volumes:
   pgdata: {}
-  redisdata: {}
   miniodata: {}
   qb_conf: {}
   qb_downloads: {}
@@ -155,12 +154,11 @@ services:
   web:     { image: ghcr.io/org/seedbox-web:latest, env_file: [.env], restart: always }
   api:     { image: ghcr.io/org/seedbox-api:latest, env_file: [.env], volumes: ["api_storage:/app/storage"], restart: always }
   app-postgres: { image: postgres:16, environment: {...}, volumes: ["pgdata:/var/lib/postgresql/data"], restart: always }
-  redis:   { image: redis:7, command: ["redis-server","--appendonly","yes"], volumes: ["redisdata:/data"], restart: always }
   minio:   { image: minio/minio, command: server /data --console-address ":9001", volumes: ["miniodata:/data"], restart: always }
   fetcher: { image: lscr.io/linuxserver/qbittorrent:latest, volumes: ["qb_conf:/config","qb_downloads:/downloads","./scripts:/scripts:ro"], restart: always }
 ```
 
-**持久化**：Postgres/Redis/MinIO/qB 配置与下载目录均为卷或绑定目录。
+**持久化**：Postgres/MinIO/qB 配置与下载目录均为卷或绑定目录。
 **备份**：
 
 * `pg_dump` 每日 → `s3://backup/db/{date}.sql.gz`（保留 14 天）
@@ -240,8 +238,6 @@ APP_DB_HOST=app-postgres
 APP_DB_PORT=5432
 
 BITMAGNET_RO_DSN=postgresql://ro_user:CHANGE@HOST:5432/bitmagnet
-
-REDIS_URL=redis://redis:6379/0
 
 MINIO_ENDPOINT=http://minio:9000
 MINIO_ACCESS_KEY=CHANGE_ME
