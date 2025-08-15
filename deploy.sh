@@ -4,30 +4,27 @@ set -e
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
-declare -A RESERVED_PORTS=()
-
-find_free_port() {
-  local port=$1
-  while nc -z localhost "$port" >/dev/null 2>&1 || [[ -n "${RESERVED_PORTS[$port]}" ]]; do
-    port=$((port+1))
+prompt_for_port() {
+  local host_port=$1
+  local container_port=$2
+  local port=$host_port
+  while nc -z localhost "$port" >/dev/null 2>&1; do
+    read -p "Port $port is in use. Enter a new port for $container_port: " port
   done
-  RESERVED_PORTS[$port]=1
   echo "$port"
 }
 
-prepare_compose_with_free_ports() {
+prepare_compose_with_port_prompts() {
   local src=$1
   local dest=$(mktemp)
   cp "$src" "$dest"
-  RESERVED_PORTS=()
   while IFS= read -r line; do
     if [[ $line =~ \"([0-9]+):([0-9]+)\" ]]; then
       host_port="${BASH_REMATCH[1]}"
       container_port="${BASH_REMATCH[2]}"
-      free_port=$(find_free_port "$host_port")
-      if [ "$free_port" != "$host_port" ]; then
-        echo "Port $host_port is in use. Using $free_port instead." >&2
-        sed -i "s/${host_port}:${container_port}/${free_port}:${container_port}/" "$dest"
+      new_port=$(prompt_for_port "$host_port" "$container_port")
+      if [ "$new_port" != "$host_port" ]; then
+        sed -i "s/${host_port}:${container_port}/${new_port}:${container_port}/" "$dest"
       fi
     fi
   done < "$src"
@@ -92,71 +89,10 @@ if [ -d .git ]; then
     git stash pop || true
   fi
 fi
-
-configure_env() {
-  local template=".env.example"
-  if [ ! -f "$template" ]; then
-    if [ -f .env ]; then
-      echo ".env.example not found. Using existing .env as template." >&2
-      template=".env"
-    else
-      echo "No environment template found (missing .env.example or .env)." >&2
-      return 1
-    fi
-  fi
-
-  local tmp=$(mktemp)
-  echo "Configuring environment variables..."
-  while IFS= read -r line; do
-    if [[ -z "$line" || "$line" =~ ^# ]]; then
-      echo "$line" >> "$tmp"
-    else
-      local var="${line%%=*}"
-      local default="${line#*=}"
-      local current=""
-      if [ -f .env ]; then
-        current=$(grep -E "^${var}=" .env | cut -d= -f2-)
-      fi
-      local prompt="${current:-$default}"
-      read -p "Enter value for $var [$prompt]: " value
-      # Allow the user to paste full VAR=VALUE lines. If the name doesn't
-      # match the expected variable, fall back to the default so we don't end
-      # up with confusing assignments like DATA_DIR=MINIO_ENDPOINT=...
-      if [[ "$value" == *=* ]]; then
-        input_var="${value%%=*}"
-        if [[ "$input_var" == "$var" ]]; then
-          value="${value#*=}"
-        else
-          echo "Input contained assignment for $input_var while prompting for $var; using default." >&2
-          value=""
-        fi
-      fi
-      value=${value:-$prompt}
-      echo "$var=$value" >> "$tmp"
-    fi
-  done < "$template"
-  mv "$tmp" .env
-}
-
-print_config_summary() {
-  echo "Configuration summary:"
-  while IFS= read -r line; do
-    [[ -z "$line" || "$line" =~ ^# ]] && continue
-    echo "  $line"
-  done < .env
-  echo
-  echo "Transcode node requires these values:" 
-  for var in DATA_DIR MINIO_ENDPOINT MINIO_ACCESS_KEY MINIO_SECRET_KEY MINIO_BUCKET_PREVIEWS MINIO_BUCKET_HLS; do
-    local value=$(grep -E "^$var=" .env | cut -d= -f2-)
-    echo "  $var=$value"
-  done
-}
-
-# Configure environment interactively each run
-configure_env
-set -a
-source .env
-set +a
+# Prompt for persistent data directory
+read -p "Enter data directory [/opt/seedbox]: " DATA_DIR
+DATA_DIR=${DATA_DIR:-/opt/seedbox}
+export DATA_DIR
 
 mkdir -p \
   "$DATA_DIR/redis" \
@@ -178,22 +114,20 @@ read -p "Enter choice [1-3]: " choice
 
 case "$choice" in
   1)
-    serve_compose=$(prepare_compose_with_free_ports compose.serve.yml)
+    serve_compose=$(prepare_compose_with_port_prompts compose.serve.yml)
     docker compose --project-directory "$REPO_DIR" -f "$serve_compose" up -d
     display_ports "$serve_compose"
     rm "$serve_compose"
-    print_config_summary
     ;;
   2)
     docker compose --project-directory "$REPO_DIR" -f compose.transcode.yml up -d
     display_ports compose.transcode.yml
     ;;
   3)
-    serve_compose=$(prepare_compose_with_free_ports compose.serve.yml)
+    serve_compose=$(prepare_compose_with_port_prompts compose.serve.yml)
     docker compose --project-directory "$REPO_DIR" -f "$serve_compose" -f compose.transcode.yml up -d
     display_ports "$serve_compose" compose.transcode.yml
     rm "$serve_compose"
-    print_config_summary
     ;;
   *)
     echo "Invalid choice. Exiting."
