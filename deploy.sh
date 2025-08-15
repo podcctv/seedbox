@@ -89,9 +89,15 @@ if [ -d .git ]; then
     git stash pop || true
   fi
 fi
-# Prompt for persistent data directory
-read -p "Enter data directory [/opt/seedbox]: " DATA_DIR
-DATA_DIR=${DATA_DIR:-/opt/seedbox}
+# Prompt for persistent data directory. Allow preset DATA_DIR or non-interactive defaults.
+if [ -z "${DATA_DIR}" ]; then
+  if [ -t 0 ]; then
+    read -p "Enter data directory [/opt/seedbox]: " DATA_DIR
+    DATA_DIR=${DATA_DIR:-/opt/seedbox}
+  else
+    DATA_DIR=/opt/seedbox
+  fi
+fi
 export DATA_DIR
 
 mkdir -p \
@@ -110,7 +116,15 @@ echo "Select deployment option:"
 echo "1) server"
 echo "2) transcode"
 echo "3) both"
-read -p "Enter choice [1-3]: " choice
+if [ -z "${DEPLOY_CHOICE}" ]; then
+  if [ -t 0 ]; then
+    read -p "Enter choice [1-3]: " choice
+  else
+    choice=1
+  fi
+else
+  choice=${DEPLOY_CHOICE}
+fi
 
 case "$choice" in
   1)
