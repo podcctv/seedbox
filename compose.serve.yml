@@ -6,6 +6,7 @@ services:
       - ./:/app
     environment:
       - PYTHONPATH=/app
+      - BITMAGNET_RO_DSN=${BITMAGNET_RO_DSN}
     ports:
       - "8000:8000"
 
