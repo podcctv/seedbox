@@ -207,15 +207,13 @@ fi
 echo "Bitmagnet Postgres connection successful."
 
 echo "Running sample movie query..."
-read -r -d '' CONTENT_QUERY <<'SQL'
-SELECT id FROM public.content LIMIT 1;
-SQL
+CONTENT_QUERY="SELECT id FROM public.content LIMIT 1;"
 if ! docker run --rm -e PGPASSWORD="$BITMAGNET_DB_PASS" postgres:16-alpine \
   psql -h "$BITMAGNET_DB_HOST" -p "$BITMAGNET_DB_PORT" -U "$BITMAGNET_DB_USER" -d "$BITMAGNET_DB_NAME" -c "$CONTENT_QUERY"; then
   echo "Sample content query failed. Aborting." >&2
   exit 1
 fi
-  echo "Sample content query successful."
+echo "Sample content query successful."
 
 export BITMAGNET_RO_DSN="postgresql://${BITMAGNET_DB_USER}:${BITMAGNET_DB_PASS}@${BITMAGNET_DB_HOST}:${BITMAGNET_DB_PORT}/${BITMAGNET_DB_NAME}"
 
