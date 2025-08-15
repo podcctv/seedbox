@@ -15,9 +15,10 @@ export default function Videos() {
   const [videos, setVideos] = useState<Video[]>([]);
 
   useEffect(() => {
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const apiBase =
+      process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
     fetch(`${apiBase}/videos`)
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : Promise.reject(res.statusText)))
       .then((data) => setVideos(data.videos || []))
       .catch((err) => {
         console.error('videos fetch failed', err);
