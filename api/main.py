@@ -1,9 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from typing import Optional
 import logging
+import os
+import asyncpg
 
 from .config import AppConfig, init_db, load_config, save_config
 
@@ -12,6 +15,14 @@ logger = logging.getLogger("audit")
 
 app = FastAPI(title="MediaHub API")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 security = HTTPBearer()
 
 FAKE_TOKEN = "fake-jwt"
@@ -19,6 +30,28 @@ TOKEN_EXP_HOURS = 72
 
 init_db()
 current_config = load_config()
+
+BITMAGNET_RO_DSN = os.environ.get(
+    "BITMAGNET_RO_DSN",
+    "postgresql://postgres@84.54.3.69:5433/bitmagnet",
+)
+bitmagnet_pool: Optional[asyncpg.Pool] = None
+
+
+@app.on_event("startup")
+async def startup() -> None:
+    global bitmagnet_pool
+    try:
+        bitmagnet_pool = await asyncpg.create_pool(BITMAGNET_RO_DSN, min_size=1, max_size=5)
+    except Exception as exc:
+        logger.warning("bitmagnet pool unavailable: %s", exc)
+        bitmagnet_pool = None
+
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    if bitmagnet_pool:
+        await bitmagnet_pool.close()
 
 
 class LoginRequest(BaseModel):
@@ -64,8 +97,19 @@ async def auth_verify(_: bool = Depends(verify_token)):
 
 @app.get("/search")
 async def search(q: Optional[str] = None):
-    # Placeholder search implementation
-    return {"results": [], "query": q}
+    if not q or bitmagnet_pool is None:
+        return {"results": [], "query": q}
+    try:
+        async with bitmagnet_pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT id, title FROM items WHERE title ILIKE $1 ORDER BY created_at DESC LIMIT 10",
+                f"%{q}%",
+            )
+        results = [dict(r) for r in rows]
+        return {"results": results, "query": q}
+    except Exception as exc:
+        logger.error("search failed q=%s err=%s", q, exc)
+        return {"results": [], "query": q}
 
 
 @app.post("/tasks/fetch")
