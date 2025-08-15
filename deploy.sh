@@ -198,8 +198,9 @@ if [ -z "${BITMAGNET_DB_NAME}" ]; then
 fi
 
 echo "Testing Bitmagnet Postgres connection..."
+echo "Running test query: SELECT 1"
 if ! docker run --rm -e PGPASSWORD="$BITMAGNET_DB_PASS" postgres:16-alpine \
-  psql -h "$BITMAGNET_DB_HOST" -p "$BITMAGNET_DB_PORT" -U "$BITMAGNET_DB_USER" -d "$BITMAGNET_DB_NAME" -c "SELECT 1" >/dev/null 2>&1; then
+  psql -h "$BITMAGNET_DB_HOST" -p "$BITMAGNET_DB_PORT" -U "$BITMAGNET_DB_USER" -d "$BITMAGNET_DB_NAME" -c "SELECT 1"; then
   echo "Failed to connect to Bitmagnet Postgres. Aborting." >&2
   exit 1
 fi
