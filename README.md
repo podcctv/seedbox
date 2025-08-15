@@ -9,12 +9,14 @@
 - **BitMagnet Next Web**：提供种子检索与元数据展示界面。
 - **qBittorrent**：下载引擎，完成 BT 任务。
 - **API / MinIO**：供转码节点通信与存储使用。
+- **Seedbox Web 前端**：按规范提供媒体搜索与播放入口。
 - **FFmpeg Worker**（可选）：在独立节点执行视频切片与上传。
 
 默认开放的宿主机端口如下，可在 `.env` 中自定义：
 
 | 服务                | 端口 |
 | ------------------- | ---- |
+| Seedbox Web Frontend | 3001 |
 | BitMagnet Next Web  | 3000 |
 | qBittorrent Web UI  | 8081 |
 | API（转码通信）     | 8000 |
@@ -37,6 +39,7 @@
 
 3. 部署完成后即可访问：
 
+   - <http://localhost:3001> — Seedbox Web 前端
    - <http://localhost:3000> — BitMagnet Next Web
    - <http://localhost:8081> — qBittorrent
 
