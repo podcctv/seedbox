@@ -9,7 +9,12 @@ prompt_for_port() {
   local container_port=$2
   local port=$host_port
   while nc -z localhost "$port" >/dev/null 2>&1; do
-    read -p "Port $port is in use. Enter a new port for $container_port: " port
+    if [ -t 2 ]; then
+      read -p "Port $port is in use. Enter a new port for $container_port: " port < /dev/tty
+    else
+      echo "Port $port is in use and no TTY is available to choose a new one." >&2
+      return 1
+    fi
   done
   echo "$port"
 }
@@ -22,7 +27,7 @@ prepare_compose_with_port_prompts() {
     if [[ $line =~ \"([0-9]+):([0-9]+)\" ]]; then
       host_port="${BASH_REMATCH[1]}"
       container_port="${BASH_REMATCH[2]}"
-      new_port=$(prompt_for_port "$host_port" "$container_port")
+      new_port=$(prompt_for_port "$host_port" "$container_port") || return 1
       if [ "$new_port" != "$host_port" ]; then
         sed -i "s/${host_port}:${container_port}/${new_port}:${container_port}/" "$dest"
       fi
@@ -78,15 +83,19 @@ PY
 # Update repository
 if [ -d .git ]; then
   echo "Updating repository..."
-  if [ -n "$(git status --porcelain)" ]; then
-    echo "Stashing local changes..."
-    git stash push --include-untracked
-    STASHED=1
-  fi
-  git pull --rebase
-  if [ "${STASHED:-0}" -eq 1 ]; then
-    echo "Restoring local changes..."
-    git stash pop || true
+  if git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1; then
+    if [ -n "$(git status --porcelain)" ]; then
+      echo "Stashing local changes..."
+      git stash push --include-untracked
+      STASHED=1
+    fi
+    git pull --rebase
+    if [ "${STASHED:-0}" -eq 1 ]; then
+      echo "Restoring local changes..."
+      git stash pop || true
+    fi
+  else
+    echo "No upstream configured for current branch. Skipping pull."
   fi
 fi
 # Prompt for persistent data directory. Allow preset DATA_DIR or non-interactive defaults.
