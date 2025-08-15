@@ -3,10 +3,14 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Any
 import logging
 import os
-import asyncpg
+
+try:  # pragma: no cover - optional dependency
+    import asyncpg
+except ModuleNotFoundError:  # pragma: no cover - asyncpg is optional
+    asyncpg = None
 
 from .config import AppConfig, init_db, load_config, save_config
 
@@ -35,14 +39,20 @@ BITMAGNET_RO_DSN = os.environ.get(
     "BITMAGNET_RO_DSN",
     "postgresql://postgres@84.54.3.69:5433/bitmagnet",
 )
-bitmagnet_pool: Optional[asyncpg.Pool] = None
+bitmagnet_pool: Optional[Any] = None
 
 
 @app.on_event("startup")
 async def startup() -> None:
     global bitmagnet_pool
+    if asyncpg is None:
+        logger.warning("asyncpg not installed; bitmagnet pool disabled")
+        bitmagnet_pool = None
+        return
     try:
-        bitmagnet_pool = await asyncpg.create_pool(BITMAGNET_RO_DSN, min_size=1, max_size=5)
+        bitmagnet_pool = await asyncpg.create_pool(
+            BITMAGNET_RO_DSN, min_size=1, max_size=5
+        )
     except Exception as exc:
         logger.warning("bitmagnet pool unavailable: %s", exc)
         bitmagnet_pool = None
@@ -86,7 +96,9 @@ async def auth_login(payload: LoginRequest):
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     if credentials.scheme.lower() != "bearer" or credentials.credentials != FAKE_TOKEN:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
     return True
 
 
