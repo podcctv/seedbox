@@ -71,7 +71,7 @@ else:
     print("Service port mappings:")
     for name, host, container in ports:
         print(f"  {host} -> {name} (container {container})")
-    web_services = ['web', 'gateway', 'bitmagnet-next-web']
+    web_services = ['web', 'gateway']
     web = next((host for svc in web_services for name, host, _ in ports if name == svc), None)
     if web:
         print(f"Web interface available at http://localhost:{web}")
@@ -114,10 +114,63 @@ if [ -z "${DATA_DIR}" ]; then
 fi
 export DATA_DIR
 
+# Configure external Bitmagnet Postgres connection
+echo "Configure Bitmagnet Postgres connection:"
+if [ -z "${BITMAGNET_DB_HOST}" ]; then
+  if [ -t 0 ]; then
+    read -p "Host: " BITMAGNET_DB_HOST
+  else
+    echo "BITMAGNET_DB_HOST is required." >&2
+    exit 1
+  fi
+fi
+if [ -z "${BITMAGNET_DB_PORT}" ]; then
+  if [ -t 0 ]; then
+    read -p "Port [5432]: " BITMAGNET_DB_PORT
+    BITMAGNET_DB_PORT=${BITMAGNET_DB_PORT:-5432}
+  else
+    BITMAGNET_DB_PORT=5432
+  fi
+fi
+if [ -z "${BITMAGNET_DB_USER}" ]; then
+  if [ -t 0 ]; then
+    read -p "Username: " BITMAGNET_DB_USER
+  else
+    echo "BITMAGNET_DB_USER is required." >&2
+    exit 1
+  fi
+fi
+if [ -z "${BITMAGNET_DB_PASS}" ]; then
+  if [ -t 0 ]; then
+    read -s -p "Password: " BITMAGNET_DB_PASS
+    echo
+  else
+    echo "BITMAGNET_DB_PASS is required." >&2
+    exit 1
+  fi
+fi
+if [ -z "${BITMAGNET_DB_NAME}" ]; then
+  if [ -t 0 ]; then
+    read -p "Database [bitmagnet]: " BITMAGNET_DB_NAME
+    BITMAGNET_DB_NAME=${BITMAGNET_DB_NAME:-bitmagnet}
+  else
+    BITMAGNET_DB_NAME=bitmagnet
+  fi
+fi
+
+echo "Testing Bitmagnet Postgres connection..."
+if ! docker run --rm -e PGPASSWORD="$BITMAGNET_DB_PASS" postgres:16-alpine \
+  psql -h "$BITMAGNET_DB_HOST" -p "$BITMAGNET_DB_PORT" -U "$BITMAGNET_DB_USER" -d "$BITMAGNET_DB_NAME" -c "SELECT 1" >/dev/null 2>&1; then
+  echo "Failed to connect to Bitmagnet Postgres. Aborting." >&2
+  exit 1
+fi
+echo "Bitmagnet Postgres connection successful."
+
+export BITMAGNET_RO_DSN="postgresql://${BITMAGNET_DB_USER}:${BITMAGNET_DB_PASS}@${BITMAGNET_DB_HOST}:${BITMAGNET_DB_PORT}/${BITMAGNET_DB_NAME}"
+
 mkdir -p \
   "$DATA_DIR/redis" \
   "$DATA_DIR/app-postgres" \
-  "$DATA_DIR/bitmagnet-postgres" \
   "$DATA_DIR/minio" \
   "$DATA_DIR/qbittorrent/config" \
   "$DATA_DIR/qbittorrent/downloads" \
