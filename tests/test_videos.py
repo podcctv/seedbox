@@ -10,9 +10,9 @@ from api.main import app
 
 client = TestClient(app)
 
-def test_movies_endpoint():
-    response = client.get('/movies')
+def test_videos_endpoint():
+    response = client.get('/videos')
     assert response.status_code == 200
     data = response.json()
-    assert 'movies' in data
-    assert isinstance(data['movies'], list)
+    assert 'videos' in data
+    assert isinstance(data['videos'], list)
