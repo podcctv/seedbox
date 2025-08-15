@@ -140,6 +140,11 @@ if [ -z "${DATA_DIR}" ]; then
     DATA_DIR=/opt/seedbox
   fi
 fi
+
+# Ensure the data directory is an absolute path for Docker volume mounts
+if [[ "$DATA_DIR" != /* ]]; then
+  DATA_DIR="/$DATA_DIR"
+fi
 export DATA_DIR
 
 if [ "$choice" = "4" ]; then
