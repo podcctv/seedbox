@@ -11,7 +11,7 @@ services:
   redis:
     image: redis:7
     volumes:
-      - ${DATA_DIR}/redis:/data
+      - ${DATA_DIR:-/opt/seedbox}/redis:/data
   app-postgres:
     image: postgres:15
     environment:
@@ -19,7 +19,7 @@ services:
       POSTGRES_USER: mediahub
       POSTGRES_PASSWORD: example
     volumes:
-      - ${DATA_DIR}/app-postgres:/var/lib/postgresql/data
+      - ${DATA_DIR:-/opt/seedbox}/app-postgres:/var/lib/postgresql/data
   minio:
     image: minio/minio
     command: server /data
@@ -27,7 +27,7 @@ services:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: minio123
     volumes:
-      - ${DATA_DIR}/minio:/data
+      - ${DATA_DIR:-/opt/seedbox}/minio:/data
     ports:
       - "9000:9000"
   qbittorrent:
@@ -38,8 +38,8 @@ services:
       - TZ=UTC
       - WEBUI_PORT=8080
     volumes:
-      - ${DATA_DIR}/qbittorrent/config:/config
-      - ${DATA_DIR}/qbittorrent/downloads:/downloads
+      - ${DATA_DIR:-/opt/seedbox}/qbittorrent/config:/config
+      - ${DATA_DIR:-/opt/seedbox}/qbittorrent/downloads:/downloads
       - ./scripts:/scripts:ro
     ports:
       - "8081:8080"
@@ -48,11 +48,11 @@ services:
   bitmagnet-postgres:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_PASSWORD=${BITMAGNET_DB_PASS}
-      - POSTGRES_DB=${BITMAGNET_DB_NAME}
-      - PGUSER=${BITMAGNET_DB_USER}
+      - POSTGRES_PASSWORD=${BITMAGNET_DB_PASS:-postgres666}
+      - POSTGRES_DB=${BITMAGNET_DB_NAME:-bitmagnet}
+      - PGUSER=${BITMAGNET_DB_USER:-postgres}
     volumes:
-      - ${DATA_DIR}/bitmagnet-postgres:/var/lib/postgresql/data
+      - ${DATA_DIR:-/opt/seedbox}/bitmagnet-postgres:/var/lib/postgresql/data
     restart: unless-stopped
     shm_size: 1g
     healthcheck:
@@ -66,7 +66,7 @@ services:
     image: ghcr.io/bitmagnet-io/bitmagnet:latest
     environment:
       - POSTGRES_HOST=bitmagnet-postgres
-      - POSTGRES_PASSWORD=${BITMAGNET_DB_PASS}
+      - POSTGRES_PASSWORD=${BITMAGNET_DB_PASS:-postgres666}
     command:
       - worker
       - run
@@ -81,7 +81,7 @@ services:
   bitmagnet-next-web:
     image: journey0ad/bitmagnet-next-web:latest
     environment:
-      - POSTGRES_DB_URL=postgres://${BITMAGNET_DB_USER}:${BITMAGNET_DB_PASS}@bitmagnet-postgres:5432/${BITMAGNET_DB_NAME}
+      - POSTGRES_DB_URL=postgres://${BITMAGNET_DB_USER:-postgres}:${BITMAGNET_DB_PASS:-postgres666}@bitmagnet-postgres:5432/${BITMAGNET_DB_NAME:-bitmagnet}
     ports:
       - "3000:3000"
     depends_on:
