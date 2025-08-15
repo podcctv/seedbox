@@ -206,6 +206,31 @@ if ! docker run --rm -e PGPASSWORD="$BITMAGNET_DB_PASS" postgres:16-alpine \
 fi
 echo "Bitmagnet Postgres connection successful."
 
+echo "Running sample movie query..."
+read -r -d '' MOVIE_QUERY <<'SQL'
+WITH type_key AS (
+  SELECT name
+  FROM public.content_attributes
+  WHERE lower(value) IN ('movie','film')
+  GROUP BY name
+  ORDER BY COUNT(*) DESC
+  LIMIT 1
+)
+SELECT c.id
+FROM public.content c
+LEFT JOIN public.content_attributes ca
+  ON ca.content_id = c.id
+ AND ca.name = (SELECT name FROM type_key)
+WHERE lower(coalesce(ca.value,'')) IN ('movie','film')
+LIMIT 1;
+SQL
+if ! docker run --rm -e PGPASSWORD="$BITMAGNET_DB_PASS" postgres:16-alpine \
+  psql -h "$BITMAGNET_DB_HOST" -p "$BITMAGNET_DB_PORT" -U "$BITMAGNET_DB_USER" -d "$BITMAGNET_DB_NAME" -c "$MOVIE_QUERY"; then
+  echo "Sample movie query failed. Aborting." >&2
+  exit 1
+fi
+echo "Sample movie query successful."
+
 export BITMAGNET_RO_DSN="postgresql://${BITMAGNET_DB_USER}:${BITMAGNET_DB_PASS}@${BITMAGNET_DB_HOST}:${BITMAGNET_DB_PORT}/${BITMAGNET_DB_NAME}"
 
 mkdir -p \

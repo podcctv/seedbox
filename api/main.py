@@ -118,6 +118,65 @@ async def search(q: Optional[str] = None):
         return {"results": [], "query": q}
 
 
+@app.get("/movies")
+async def movies():
+    if bitmagnet_pool is None:
+        return {"movies": []}
+    query = """
+    WITH type_key AS (
+      SELECT name
+      FROM public.content_attributes
+      WHERE lower(value) IN ('movie','film')
+      GROUP BY name
+      ORDER BY COUNT(*) DESC
+      LIMIT 1
+    ),
+    year_key AS (
+      SELECT name
+      FROM public.content_attributes
+      WHERE name ILIKE '%year%'
+      GROUP BY name
+      ORDER BY COUNT(*) DESC
+      LIMIT 1
+    ),
+    movies AS (
+      SELECT
+        c.id  AS content_id,
+        c.title,
+        ca_year.value AS year
+      FROM public.content c
+      LEFT JOIN public.content_attributes ca_type
+        ON ca_type.content_id = c.id
+       AND ca_type.name = (SELECT name FROM type_key)
+      LEFT JOIN public.content_attributes ca_year
+        ON ca_year.content_id = c.id
+       AND ca_year.name = (SELECT name FROM year_key)
+      WHERE lower(coalesce(ca_type.value,'')) IN ('movie','film')
+    )
+    SELECT
+      m.content_id,
+      m.title,
+      m.year,
+      t.id       AS torrent_id,
+      t.name     AS torrent_name,
+      t.infohash,
+      t.size
+    FROM movies m
+    JOIN public.torrent_contents tc ON tc.content_id = m.content_id
+    JOIN public.torrents        t  ON t.id         = tc.torrent_id
+    ORDER BY NULLIF(m.year,'')::int DESC NULLS LAST,
+             t.size DESC NULLS LAST
+    LIMIT 50;
+    """
+    try:
+        async with bitmagnet_pool.acquire() as conn:
+            rows = await conn.fetch(query)
+        return {"movies": [dict(r) for r in rows]}
+    except Exception as exc:
+        logger.error("movies query failed err=%s", exc)
+        return {"movies": []}
+
+
 @app.post("/tasks/fetch")
 async def tasks_fetch(task: FetchTask, _: bool = Depends(verify_token)):
     # Stub: accept task and return queued status
