@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 
-interface Movie {
+interface Video {
   content_id: string;
   title: string;
+  type: string;
   year?: string | null;
   torrent_id: string;
   torrent_name: string;
@@ -10,25 +11,25 @@ interface Movie {
   size: number;
 }
 
-export default function Movies() {
-  const [movies, setMovies] = useState<Movie[]>([]);
+export default function Videos() {
+  const [videos, setVideos] = useState<Video[]>([]);
 
   useEffect(() => {
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-    fetch(`${apiBase}/movies`)
+    fetch(`${apiBase}/videos`)
       .then((res) => res.json())
-      .then((data) => setMovies(data.movies || []))
+      .then((data) => setVideos(data.videos || []))
       .catch((err) => {
-        console.error('movies fetch failed', err);
-        setMovies([]);
+        console.error('videos fetch failed', err);
+        setVideos([]);
       });
   }, []);
 
   return (
     <main style={{ padding: '2rem' }}>
-      <h1>Movies</h1>
+      <h1>Videos</h1>
       <ul>
-        {movies.map((m) => (
+        {videos.map((m) => (
           <li key={`${m.content_id}-${m.torrent_id}`}>
             {m.title} {m.year ? `(${m.year})` : ''} - {m.torrent_name}
           </li>
