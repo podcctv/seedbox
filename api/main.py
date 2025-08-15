@@ -102,8 +102,14 @@ async def search(q: Optional[str] = None):
     try:
         async with bitmagnet_pool.acquire() as conn:
             rows = await conn.fetch(
-                "SELECT id, title FROM items WHERE title ILIKE $1 ORDER BY created_at DESC LIMIT 10",
-                f"%{q}%",
+                """
+                SELECT encode(info_hash, 'hex') AS id, title
+                FROM torrent_contents
+                WHERE tsv @@ plainto_tsquery('simple', $1)
+                ORDER BY created_at DESC
+                LIMIT 10
+                """,
+                q,
             )
         results = [dict(r) for r in rows]
         return {"results": results, "query": q}
