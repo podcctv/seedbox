@@ -16,3 +16,5 @@ def test_videos_endpoint():
     data = response.json()
     assert 'videos' in data
     assert isinstance(data['videos'], list)
+    if data['videos']:
+        assert 'magnet' in data['videos'][0]

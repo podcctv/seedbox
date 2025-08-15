@@ -115,10 +115,21 @@ async def search(q: Optional[str] = None):
         async with bitmagnet_pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT encode(info_hash, 'hex') AS id, title
-                FROM torrent_contents
-                WHERE tsv @@ plainto_tsquery('simple', $1)
-                ORDER BY created_at DESC
+                SELECT
+                    encode(tc.info_hash, 'hex') AS id,
+                    t.name AS torrent_name,
+                    c.title,
+                    'magnet:?xt=urn:btih:' || encode(tc.info_hash, 'hex') AS magnet,
+                    tc.size
+                FROM public.torrent_contents tc
+                LEFT JOIN public.torrents t
+                       ON t.info_hash = tc.info_hash
+                LEFT JOIN public.content c
+                       ON c.type   = tc.content_type
+                      AND c.source = tc.content_source
+                      AND c.id     = tc.content_id
+                WHERE tc.tsv @@ plainto_tsquery('simple', $1)
+                ORDER BY tc.created_at DESC
                 LIMIT 10
                 """,
                 q,
@@ -148,9 +159,9 @@ async def videos():
       c.title,
       c.type,
       ca_year.value AS year,
-      t.id       AS torrent_id,
+      encode(tc.info_hash, 'hex') AS infohash,
       t.name     AS torrent_name,
-      t.infohash,
+      'magnet:?xt=urn:btih:' || encode(tc.info_hash, 'hex') AS magnet,
       t.size
     FROM public.content c
     LEFT JOIN public.content_attributes ca_year
@@ -158,8 +169,12 @@ async def videos():
      AND ca_year.content_source = c.source
      AND ca_year.content_id = c.id
      AND ca_year.key = (SELECT key FROM year_key)
-    JOIN public.torrent_contents tc ON tc.content_id = c.id
-    JOIN public.torrents        t  ON t.id         = tc.torrent_id
+    JOIN public.torrent_contents tc
+      ON tc.content_type = c.type
+     AND tc.content_source = c.source
+     AND tc.content_id = c.id
+    JOIN public.torrents t
+      ON t.info_hash = tc.info_hash
     ORDER BY NULLIF(ca_year.value,'')::int DESC NULLS LAST,
              t.size DESC NULLS LAST
     LIMIT 50;
