@@ -239,7 +239,7 @@ APP_DB_PASS=CHANGE_ME
 APP_DB_HOST=app-postgres
 APP_DB_PORT=5432
 
-BITMAGNET_RO_DSN=postgresql://ro_user:CHANGE@bitmagnet-db:5432/bitmagnet
+BITMAGNET_RO_DSN=postgresql://ro_user:CHANGE@HOST:5432/bitmagnet
 
 REDIS_URL=redis://redis:6379/0
 
