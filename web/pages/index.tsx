@@ -15,7 +15,8 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/search?q=${encodeURIComponent(query)}`);
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+      const res = await fetch(`${apiBase}/search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
       setResults(data.results || []);
     } catch (err) {
