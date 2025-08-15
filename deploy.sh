@@ -71,7 +71,8 @@ else:
     print("Service port mappings:")
     for name, host, container in ports:
         print(f"  {host} -> {name} (container {container})")
-    web = next((host for name, host, _ in ports if name in ['gateway', 'bitmagnet-next-web']), None)
+    web_services = ['web', 'gateway', 'bitmagnet-next-web']
+    web = next((host for svc in web_services for name, host, _ in ports if name == svc), None)
     if web:
         print(f"Web interface available at http://localhost:{web}")
     else:
