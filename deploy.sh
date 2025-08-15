@@ -214,7 +214,6 @@ if ! docker run --rm -e PGPASSWORD="$BITMAGNET_DB_PASS" postgres:16-alpine \
   exit 1
 fi
 echo "Sample content query successful."
-
 export BITMAGNET_RO_DSN="postgresql://${BITMAGNET_DB_USER}:${BITMAGNET_DB_PASS}@${BITMAGNET_DB_HOST}:${BITMAGNET_DB_PORT}/${BITMAGNET_DB_NAME}"
 
 mkdir -p \
