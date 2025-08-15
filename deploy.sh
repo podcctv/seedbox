@@ -151,6 +151,7 @@ fi
 echo "Configure Bitmagnet Postgres connection:"
 if [ -z "${BITMAGNET_DB_HOST}" ]; then
   if [ -t 0 ]; then
+    echo "If Postgres runs in Docker on this machine, use a hostname reachable from containers (e.g., host.docker.internal)."
     read -p "Host: " BITMAGNET_DB_HOST
   else
     echo "BITMAGNET_DB_HOST is required." >&2
