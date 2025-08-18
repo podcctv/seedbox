@@ -25,6 +25,7 @@
 - Gin API：提供任务管理、条目编辑/删除、预览接收等接口，端口 28000
 - Vue 3 + Vite 前端：预览墙，端口 3001
 - SQLite：存储条目信息及任务状态
+- Web 管理页面：配置节点通信参数
 
 ### 处理节点（B）
 
@@ -59,6 +60,8 @@ PATCH  /items/:id                      -> 编辑条目
 DELETE /items/:id                      -> 删除条目与文件
 POST   /jobs/next                      -> 处理节点获取下一个任务
 POST   /jobs/:id/done {sprite}         -> 上传预览图（multipart/form-data）
+GET    /config                         -> 获取节点配置
+POST   /config {downloadDir,port,workerAddr} -> 更新配置
 ```
 
 鉴权：所有请求需在 Header 中携带 `X-Auth: <token>`。

@@ -12,6 +12,7 @@
 - Transmission-daemon 处理 BT 下载
 - Go (Gin) API 提供编辑、删除及任务接口
 - Vue 3 + Vite 前端展示预览墙
+- Web 管理页面配置节点通信参数
 - SQLite 存储条目信息
 
 处理节点组件：
@@ -60,6 +61,7 @@ docker compose -f download/docker-compose.yml up -d
 
 - <http://localhost:3001> — 预览墙
 - <http://localhost:9091> — Transmission Web UI
+- <http://localhost:28000/admin/> — 管理页面
 
 ### 启动处理节点
 
