@@ -181,6 +181,16 @@ if ! docker run --rm -e PGPASSWORD="$BITMAGNET_DB_PASS" postgres:16-alpine \
   exit 1
 fi
 echo "Sample content query successful."
+
+echo "Running sample 1080P torrent query..."
+TORRENT_QUERY="SELECT encode(info_hash, 'hex') AS id, name FROM public.torrents WHERE name ILIKE '%1080P%' LIMIT 1;"
+TORRENT_RESULT=$(docker run --rm -e PGPASSWORD="$BITMAGNET_DB_PASS" postgres:16-alpine \
+  psql -h "$BITMAGNET_DB_HOST" -p "$BITMAGNET_DB_PORT" -U "$BITMAGNET_DB_USER" -d "$BITMAGNET_DB_NAME" -t -A -c "$TORRENT_QUERY" | tr -d '[:space:]')
+if [ -z "$TORRENT_RESULT" ]; then
+  echo "1080P torrent query returned no results. Aborting." >&2
+  exit 1
+fi
+echo "Sample 1080P torrent query successful."
 export BITMAGNET_RO_DSN="postgresql://${BITMAGNET_DB_USER}:${BITMAGNET_DB_PASS}@${BITMAGNET_DB_HOST}:${BITMAGNET_DB_PORT}/${BITMAGNET_DB_NAME}"
 
 # Persist environment variables for docker compose
