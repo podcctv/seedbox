@@ -26,3 +26,14 @@ func TestAuthMissing(t *testing.T) {
 		t.Fatalf("expected 401, got %d", w.Code)
 	}
 }
+
+func TestGetConfig(t *testing.T) {
+	router := setupRouter()
+	req, _ := http.NewRequest("GET", "/config", nil)
+	req.Header.Set("X-Auth", authToken)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
