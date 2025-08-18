@@ -178,6 +178,14 @@ fi
 echo "Sample content query successful."
 export BITMAGNET_RO_DSN="postgresql://${BITMAGNET_DB_USER}:${BITMAGNET_DB_PASS}@${BITMAGNET_DB_HOST}:${BITMAGNET_DB_PORT}/${BITMAGNET_DB_NAME}"
 
+# Persist environment variables for docker compose
+ENV_FILE="$REPO_DIR/.env"
+cat > "$ENV_FILE" <<EOF
+NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+BITMAGNET_RO_DSN=$BITMAGNET_RO_DSN
+DATA_DIR=$DATA_DIR
+EOF
+
 mkdir -p \
   "$DATA_DIR/app-postgres" \
   "$DATA_DIR/minio" \
