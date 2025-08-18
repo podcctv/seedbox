@@ -20,26 +20,28 @@
 ```
 
 ### 下载节点（A）
+
 - Transmission-daemon：BT 下载，端口 9091
-- Gin API：提供任务管理、条目编辑/删除、预览接收等接口，端口 8000
+- Gin API：提供任务管理、条目编辑/删除、预览接收等接口，端口 28000
 - Vue 3 + Vite 前端：预览墙，端口 3001
 - SQLite：存储条目信息及任务状态
 
 ### 处理节点（B）
+
 - Python 3 脚本：轮询下载节点获取待处理任务
 - FFmpeg：生成预览拼图（如 `fps=1/10, scale=320:-1, tile=5x5`）
 - HTTP 客户端：将生成的预览图通过 `POST /api/jobs/:id/done` 回传
 
 ## 2. 技术选型
 
-| 模块            | 技术           |
-| --------------- | -------------- |
-| 前端            | Vue 3 + Vite + Tailwind |
-| 后端 API       | Go 1.21 + Gin  |
-| BT 客户端      | Transmission-daemon |
-| 数据库          | SQLite         |
-| 处理节点脚本    | Python 3 + FFmpeg |
-| 通信方式        | HTTP/JSON，简单 Token 鉴权 |
+| 模块         | 技术                       |
+| ------------ | -------------------------- |
+| 前端         | Vue 3 + Vite + Tailwind    |
+| 后端 API     | Go 1.21 + Gin              |
+| BT 客户端    | Transmission-daemon        |
+| 数据库       | SQLite                     |
+| 处理节点脚本 | Python 3 + FFmpeg          |
+| 通信方式     | HTTP/JSON，简单 Token 鉴权 |
 
 ## 3. 预览墙功能
 
@@ -90,4 +92,3 @@ API_TOKEN=CHANGE_ME
 
 - 单元测试：`pytest`
 - 恢复流程：重新启动容器 → 挂载原有数据目录 → 确认 API 与 Transmission 正常工作。
-

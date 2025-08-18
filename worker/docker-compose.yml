@@ -6,6 +6,6 @@ services:
     volumes:
       - ./:/app
     environment:
-      - API_URL=http://localhost:8000
+      - API_URL=http://localhost:28000
       - API_TOKEN=token
     command: sh -c "pip install requests && python worker.py"
