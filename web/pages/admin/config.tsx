@@ -1,4 +1,5 @@
 import { useState, useEffect, ChangeEvent } from 'react';
+import { useRouter } from 'next/router';
 
 interface Config {
   download_dir: string;
@@ -8,16 +9,29 @@ interface Config {
 
 export default function ConfigPage() {
   const [config, setConfig] = useState<Config>({ download_dir: '', ffmpeg_preset: '' });
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
     fetch(`${apiBase}/admin/config`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then((res) => res.json())
-      .then(setConfig);
-  }, []);
+      .then((res) => {
+        if (res.status === 401 || res.status === 403) {
+          router.push('/login');
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data) setConfig(data);
+      });
+  }, [router]);
 
   const onChange = (field: keyof Config) => (e: ChangeEvent<HTMLInputElement>) => {
     setConfig({ ...config, [field]: e.target.value });

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin');
   const router = useRouter();
 
   const onSubmit = async (e: React.FormEvent) => {
