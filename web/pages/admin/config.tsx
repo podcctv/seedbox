@@ -1,5 +1,6 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 interface Config {
   download_dir: string;
@@ -53,6 +54,9 @@ export default function ConfigPage() {
 
   return (
     <main>
+      <nav style={{ marginBottom: '1rem' }}>
+        <Link href="/admin/postgres">Postgres</Link>
+      </nav>
       <h1>Configuration</h1>
       <div>
         <label>
