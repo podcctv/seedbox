@@ -36,6 +36,25 @@ current_config = load_config()
 bitmagnet_pool: Optional[Any] = None
 
 
+async def ensure_bitmagnet_pool() -> Optional[Any]:
+    """Ensure the Bitmagnet connection pool is available.
+
+    If the pool failed to initialize at startup (for example if the database
+    was temporarily unreachable), this function will attempt to create it on
+    demand when a request needs database access.
+    """
+    global bitmagnet_pool
+    if bitmagnet_pool is None and asyncpg is not None:
+        try:
+            bitmagnet_pool = await asyncpg.create_pool(
+                current_config.postgres_dsn, min_size=1, max_size=5
+            )
+        except Exception as exc:  # pragma: no cover - network errors
+            logger.warning("bitmagnet pool unavailable: %s", exc)
+            bitmagnet_pool = None
+    return bitmagnet_pool
+
+
 @app.on_event("startup")
 async def startup() -> None:
     global bitmagnet_pool
@@ -107,7 +126,7 @@ async def auth_verify(_: bool = Depends(verify_token)):
 async def search(q: Optional[str] = None):
     if not q:
         return {"results": [], "query": q}
-    if bitmagnet_pool is None:
+    if await ensure_bitmagnet_pool() is None:
         raise HTTPException(status_code=503, detail="bitmagnet database unavailable")
     try:
         async with bitmagnet_pool.acquire() as conn:
@@ -159,7 +178,7 @@ async def search(q: Optional[str] = None):
 
 @app.get("/videos")
 async def videos():
-    if bitmagnet_pool is None:
+    if await ensure_bitmagnet_pool() is None:
         raise HTTPException(status_code=503, detail="bitmagnet database unavailable")
     query = """
     WITH year_key AS (
@@ -242,7 +261,7 @@ class SQLQuery(BaseModel):
 
 @app.post("/admin/query")
 async def admin_query(q: SQLQuery, _: bool = Depends(verify_token)):
-    if bitmagnet_pool is None:
+    if await ensure_bitmagnet_pool() is None:
         raise HTTPException(status_code=503, detail="bitmagnet database unavailable")
     try:
         async with bitmagnet_pool.acquire() as conn:
