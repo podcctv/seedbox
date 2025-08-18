@@ -130,6 +130,24 @@ async def search(q: Optional[str] = None):
                 """,
                 q,
             )
+
+            # Fallback for languages without full-text support (e.g. Chinese)
+            if not rows:
+                rows = await conn.fetch(
+                    """
+                    SELECT
+                        encode(t.info_hash, 'hex') AS id,
+                        t.name AS torrent_name,
+                        NULL        AS title,
+                        'magnet:?xt=urn:btih:' || encode(t.info_hash, 'hex') AS magnet,
+                        t.size
+                    FROM public.torrents t
+                    WHERE t.name ILIKE $1
+                    ORDER BY t.created_at DESC
+                    LIMIT 10
+                    """,
+                    f"%{q}%",
+                )
         results = [dict(r) for r in rows]
         return {"results": results, "query": q}
     except Exception as exc:
