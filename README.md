@@ -39,7 +39,15 @@
 ```bash
 git clone https://github.com/podcctv/seedbox.git
 cd seedbox
-bash deploy.sh
+bash deploy.sh        # Linux / macOS
+```
+
+或在 Windows 上使用 PowerShell：
+
+```powershell
+git clone https://github.com/podcctv/seedbox.git
+cd seedbox
+pwsh deploy.ps1
 ```
 
 ### 启动下载节点
