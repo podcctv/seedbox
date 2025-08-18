@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta
 from typing import Optional, Any
 import logging
-import os
 
 try:  # pragma: no cover - optional dependency
     import asyncpg
@@ -34,11 +33,6 @@ TOKEN_EXP_HOURS = 72
 
 init_db()
 current_config = load_config()
-
-BITMAGNET_RO_DSN = os.environ.get(
-    "BITMAGNET_RO_DSN",
-    "postgresql://postgres@84.54.3.69:5433/bitmagnet",
-)
 bitmagnet_pool: Optional[Any] = None
 
 
@@ -51,7 +45,7 @@ async def startup() -> None:
         return
     try:
         bitmagnet_pool = await asyncpg.create_pool(
-            BITMAGNET_RO_DSN, min_size=1, max_size=5
+            current_config.postgres_dsn, min_size=1, max_size=5
         )
     except Exception as exc:
         logger.warning("bitmagnet pool unavailable: %s", exc)
@@ -204,10 +198,37 @@ async def get_config(_: bool = Depends(verify_token)):
 
 @app.put("/admin/config", response_model=AppConfig)
 async def update_config(cfg: AppConfig, _: bool = Depends(verify_token)):
-    global current_config
+    global current_config, bitmagnet_pool
     save_config(cfg)
     current_config = cfg
+    if asyncpg:
+        try:
+            if bitmagnet_pool:
+                await bitmagnet_pool.close()
+            bitmagnet_pool = await asyncpg.create_pool(
+                cfg.postgres_dsn, min_size=1, max_size=5
+            )
+        except Exception as exc:
+            logger.warning("bitmagnet pool unavailable: %s", exc)
+            bitmagnet_pool = None
     return current_config
+
+
+class SQLQuery(BaseModel):
+    sql: str
+
+
+@app.post("/admin/query")
+async def admin_query(q: SQLQuery, _: bool = Depends(verify_token)):
+    if bitmagnet_pool is None:
+        return {"rows": []}
+    try:
+        async with bitmagnet_pool.acquire() as conn:
+            rows = await conn.fetch(q.sql)
+        return {"rows": [dict(r) for r in rows]}
+    except Exception as exc:
+        logger.error("admin query failed sql=%s err=%s", q.sql, exc)
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @app.get("/items/{item_id}")
