@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import Link from 'next/link';
 
 interface SearchResult {
   id: string;
@@ -29,7 +30,10 @@ export default function Home() {
 
   return (
     <main style={{ padding: '2rem' }}>
-      <h1>Media Search</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Media Search</h1>
+        <Link href="/login">Login</Link>
+      </div>
       <form onSubmit={onSearch} style={{ marginBottom: '1rem' }}>
         <input
           value={query}
