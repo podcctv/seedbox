@@ -3,10 +3,7 @@ import os
 from pydantic import BaseModel
 
 DB_PATH = os.environ.get("APP_DB", "app.db")
-POSTGRES_DSN_DEFAULT = os.environ.get(
-    "BITMAGNET_RO_DSN",
-    "postgresql://postgres@84.54.3.69:5433/bitmagnet",
-)
+POSTGRES_DSN_DEFAULT = "postgresql://postgres:postgres666@84.54.3.69:5433/bitmagnet"
 
 
 class AppConfig(BaseModel):
