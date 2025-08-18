@@ -62,6 +62,7 @@ docker compose -f download/docker-compose.yml up -d
 - <http://localhost:3001> — 预览墙
 - <http://localhost:9091> — Transmission Web UI
 - <http://localhost:28000/admin/> — 管理页面
+- <http://localhost:28000/admin/search.html> — 磁力链接查询
 
 ### 启动处理节点
 
@@ -82,6 +83,10 @@ docker compose up -d
 ```bash
 pytest
 ```
+
+## Bitmagnet 数据库
+
+部署脚本会引导你填写 Bitmagnet 数据库的地址、端口和凭据，并将其写入 `.env`。下载节点启动后，可通过 `/search` 接口或管理页面中的 *Magnet Search* 进行磁力链接查询。
 
 ## 许可说明
 

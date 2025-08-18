@@ -62,6 +62,7 @@ POST   /jobs/next                      -> 处理节点获取下一个任务
 POST   /jobs/:id/done {sprite}         -> 上传预览图（multipart/form-data）
 GET    /config                         -> 获取节点配置
 POST   /config {downloadDir,port,workerAddr} -> 更新配置
+GET    /search?q=keyword               -> 查询 Bitmagnet 数据库并返回磁力链接
 ```
 
 鉴权：所有请求需在 Header 中携带 `X-Auth: <token>`。
@@ -83,6 +84,10 @@ DOWNLOAD_ROOT=/downloads
 PREVIEW_ROOT=/previews
 TRANS_RPC_URL=http://transmission:9091
 API_TOKEN=CHANGE_ME
+BITMAGNET_DB_HOST=127.0.0.1
+BITMAGNET_DB_PORT=5432
+BITMAGNET_DB_USER=postgres
+BITMAGNET_DB_PASS=postgres
 ```
 
 ## 7. 部署说明
