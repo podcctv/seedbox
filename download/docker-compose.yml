@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  api:
+    image: golang:1.21-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: go run main.go
+    ports:
+      - "8000:8000"
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - ./downloads:/downloads
+    ports:
+      - "9091:9091"
+      - "51413:51413"
+      - "51413:51413/udp"
