@@ -105,8 +105,10 @@ async def auth_verify(_: bool = Depends(verify_token)):
 
 @app.get("/search")
 async def search(q: Optional[str] = None):
-    if not q or bitmagnet_pool is None:
+    if not q:
         return {"results": [], "query": q}
+    if bitmagnet_pool is None:
+        raise HTTPException(status_code=503, detail="bitmagnet database unavailable")
     try:
         async with bitmagnet_pool.acquire() as conn:
             rows = await conn.fetch(
@@ -158,7 +160,7 @@ async def search(q: Optional[str] = None):
 @app.get("/videos")
 async def videos():
     if bitmagnet_pool is None:
-        return {"videos": []}
+        raise HTTPException(status_code=503, detail="bitmagnet database unavailable")
     query = """
     WITH year_key AS (
       SELECT key
@@ -241,7 +243,7 @@ class SQLQuery(BaseModel):
 @app.post("/admin/query")
 async def admin_query(q: SQLQuery, _: bool = Depends(verify_token)):
     if bitmagnet_pool is None:
-        return {"rows": []}
+        raise HTTPException(status_code=503, detail="bitmagnet database unavailable")
     try:
         async with bitmagnet_pool.acquire() as conn:
             rows = await conn.fetch(q.sql)

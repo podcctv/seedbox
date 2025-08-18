@@ -12,9 +12,5 @@ client = TestClient(app)
 
 def test_videos_endpoint():
     response = client.get('/videos')
-    assert response.status_code == 200
-    data = response.json()
-    assert 'videos' in data
-    assert isinstance(data['videos'], list)
-    if data['videos']:
-        assert 'magnet' in data['videos'][0]
+    assert response.status_code == 503
+    assert response.json()["detail"] == "bitmagnet database unavailable"
