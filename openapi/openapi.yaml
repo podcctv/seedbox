@@ -134,6 +134,31 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
       security:
       - HTTPBearer: []
+  /admin/query:
+    post:
+      summary: Run SQL query
+      operationId: admin_query_admin_query_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SQLQuery'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResult'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
   /items/{item_id}:
     get:
       summary: Get Item
@@ -318,6 +343,10 @@ components:
           type: string
           title: Ffmpeg Preset
           default: fast
+        postgres_dsn:
+          type: string
+          title: Postgres Dsn
+          default: postgresql://postgres@84.54.3.69:5433/bitmagnet
       type: object
       title: AppConfig
       description: Application configuration stored in the database.
@@ -375,6 +404,26 @@ components:
       - role
       - exp
       title: LoginResponse
+    SQLQuery:
+      properties:
+        sql:
+          type: string
+          title: Sql
+      type: object
+      required:
+      - sql
+      title: SQLQuery
+    QueryResult:
+      properties:
+        rows:
+          items:
+            type: object
+          type: array
+          title: Rows
+      type: object
+      required:
+      - rows
+      title: QueryResult
     ValidationError:
       properties:
         loc:

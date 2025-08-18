@@ -3,14 +3,17 @@ import { useState, useEffect, ChangeEvent } from 'react';
 interface Config {
   download_dir: string;
   ffmpeg_preset: string;
+  postgres_dsn?: string;
 }
 
 export default function ConfigPage() {
   const [config, setConfig] = useState<Config>({ download_dir: '', ffmpeg_preset: '' });
 
   useEffect(() => {
-    fetch('http://localhost:8000/admin/config', {
-      headers: { Authorization: 'Bearer fake-jwt' }
+    const token = localStorage.getItem('token');
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    fetch(`${apiBase}/admin/config`, {
+      headers: { Authorization: `Bearer ${token}` }
     })
       .then((res) => res.json())
       .then(setConfig);
@@ -21,11 +24,13 @@ export default function ConfigPage() {
   };
 
   const save = async () => {
-    await fetch('http://localhost:8000/admin/config', {
+    const token = localStorage.getItem('token');
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    await fetch(`${apiBase}/admin/config`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: 'Bearer fake-jwt'
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(config)
     });
