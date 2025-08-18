@@ -65,3 +65,17 @@ def test_search_fallback_ilike(monkeypatch):
     assert data['results'] and data['results'][0]['torrent_name'] == 'demo'
     # ensure full-text search attempted first
     assert any('websearch_to_tsquery' in sql for sql, _ in pool.conn.calls)
+
+
+def test_search_connects_on_demand(monkeypatch):
+    pool = DummyPool()
+
+    async def fake_create_pool(*args, **kwargs):
+        return pool
+
+    monkeypatch.setattr(main, 'bitmagnet_pool', None)
+    monkeypatch.setattr(main.asyncpg, 'create_pool', fake_create_pool)
+    response = client.get('/search', params={'q': 'demo'})
+    assert response.status_code == 200
+    assert response.json()['results']
+    assert main.bitmagnet_pool is pool
