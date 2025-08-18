@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import requests
 
-API_URL = os.getenv("API_URL", "http://localhost:8000")
+API_URL = os.getenv("API_URL", "http://localhost:28000")
 API_TOKEN = os.getenv("API_TOKEN", "token")
 
 
