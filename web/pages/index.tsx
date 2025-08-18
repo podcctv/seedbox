@@ -5,6 +5,7 @@ interface SearchResult {
   id: string;
   title?: string;
   name?: string;
+  torrent_name?: string;
 }
 
 export default function Home() {
@@ -49,7 +50,7 @@ export default function Home() {
       {!loading && (
         <ul>
           {results.map((r) => (
-            <li key={r.id}>{r.title || r.name || r.id}</li>
+            <li key={r.id}>{r.title || r.torrent_name || r.name || r.id}</li>
           ))}
         </ul>
       )}
