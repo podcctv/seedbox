@@ -343,10 +343,6 @@ components:
           type: string
           title: Ffmpeg Preset
           default: fast
-        postgres_dsn:
-          type: string
-          title: Postgres Dsn
-          default: postgresql://postgres@84.54.3.69:5433/bitmagnet
       type: object
       title: AppConfig
       description: Application configuration stored in the database.

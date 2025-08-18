@@ -3,7 +3,6 @@ import os
 from pydantic import BaseModel
 
 DB_PATH = os.environ.get("APP_DB", "app.db")
-POSTGRES_DSN_DEFAULT = "postgresql://postgres:postgres666@84.54.3.69:5433/bitmagnet"
 
 
 class AppConfig(BaseModel):
@@ -11,7 +10,6 @@ class AppConfig(BaseModel):
 
     download_dir: str = "/downloads"
     ffmpeg_preset: str = "fast"
-    postgres_dsn: str = POSTGRES_DSN_DEFAULT
 
 
 def init_db() -> None:
@@ -47,3 +45,4 @@ def save_config(cfg: AppConfig) -> None:
     cur.execute("UPDATE config SET data=? WHERE id=1", [cfg.model_dump_json()])
     conn.commit()
     conn.close()
+

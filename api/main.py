@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta
 from typing import Optional, Any
 import logging
+import os
 
 try:  # pragma: no cover - optional dependency
     import asyncpg
@@ -31,6 +32,8 @@ security = HTTPBearer()
 FAKE_TOKEN = "fake-jwt"
 TOKEN_EXP_HOURS = 72
 
+BITMAGNET_RO_DSN = os.environ.get("BITMAGNET_RO_DSN", "")
+
 init_db()
 current_config = load_config()
 bitmagnet_pool: Optional[Any] = None
@@ -47,7 +50,7 @@ async def ensure_bitmagnet_pool() -> Optional[Any]:
     if bitmagnet_pool is None and asyncpg is not None:
         try:
             bitmagnet_pool = await asyncpg.create_pool(
-                current_config.postgres_dsn, min_size=1, max_size=5
+                BITMAGNET_RO_DSN, min_size=1, max_size=5
             )
         except Exception as exc:  # pragma: no cover - network errors
             logger.warning("bitmagnet pool unavailable: %s", exc)
@@ -64,7 +67,7 @@ async def startup() -> None:
         return
     try:
         bitmagnet_pool = await asyncpg.create_pool(
-            current_config.postgres_dsn, min_size=1, max_size=5
+            BITMAGNET_RO_DSN, min_size=1, max_size=5
         )
     except Exception as exc:
         logger.warning("bitmagnet pool unavailable: %s", exc)
@@ -239,19 +242,9 @@ async def get_config(_: bool = Depends(verify_token)):
 
 @app.put("/admin/config", response_model=AppConfig)
 async def update_config(cfg: AppConfig, _: bool = Depends(verify_token)):
-    global current_config, bitmagnet_pool
+    global current_config
     save_config(cfg)
     current_config = cfg
-    if asyncpg:
-        try:
-            if bitmagnet_pool:
-                await bitmagnet_pool.close()
-            bitmagnet_pool = await asyncpg.create_pool(
-                cfg.postgres_dsn, min_size=1, max_size=5
-            )
-        except Exception as exc:
-            logger.warning("bitmagnet pool unavailable: %s", exc)
-            bitmagnet_pool = None
     return current_config
 
 
