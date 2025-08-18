@@ -4,6 +4,11 @@ set -e
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
+# Example environment check: detect Windows systems
+if uname | grep -qi "windows"; then
+  echo "Detected Windows environment; this script targets Unix-like systems."
+fi
+
 CONFIG_FILE="$REPO_DIR/deploy.conf"
 if [ -f "$CONFIG_FILE" ]; then
   source "$CONFIG_FILE"
