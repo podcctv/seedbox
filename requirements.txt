@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-pydantic
-PyYAML
-pytest
-httpx
-asyncpg
