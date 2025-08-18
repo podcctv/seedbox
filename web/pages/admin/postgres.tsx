@@ -13,7 +13,8 @@ export default function PostgresPage() {
     ffmpeg_preset: '',
     postgres_dsn: ''
   });
-  const [sql, setSql] = useState('');
+  // keyword based query string
+  const [keyword, setKeyword] = useState('');
   const [rows, setRows] = useState<any[]>([]);
   const [error, setError] = useState('');
 
@@ -47,6 +48,12 @@ export default function PostgresPage() {
 
   const runQuery = async () => {
     const token = localStorage.getItem('token');
+    // escape single quotes to avoid breaking the SQL string
+    const safe = keyword.replace(/'/g, "''");
+    const sql =
+      "SELECT encode(info_hash, 'hex') AS id, name FROM public.torrents WHERE name ILIKE '%" +
+      safe +
+      "%' LIMIT 20";
     const res = await fetch(`${apiBase}/admin/query`, {
       method: 'POST',
       headers: {
@@ -80,13 +87,13 @@ export default function PostgresPage() {
         <button onClick={save}>Save</button>
       </div>
       <h2>Query</h2>
-      <textarea
-        value={sql}
-        onChange={(e) => setSql(e.target.value)}
-        rows={5}
+      <input
+        value={keyword}
+        onChange={(e) => setKeyword(e.target.value)}
+        placeholder="Enter keyword"
         style={{ width: '100%' }}
       />
-      <button onClick={runQuery}>Run</button>
+      <button onClick={runQuery}>Search</button>
       {error && <pre>{error}</pre>}
       <ul>
         {rows.map((r, i) => (
