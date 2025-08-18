@@ -82,7 +82,7 @@ API_TOKEN=CHANGE_ME
 
 ## 7. 部署说明
 
-- 两个节点各自拥有独立的 `docker compose` 文件。
+- 两个节点各自拥有独立的 `docker compose` 文件（位于 `download/docker-compose.yml` 与 `worker/docker-compose.yml`）。
 - 下载与预览目录使用卷挂载以保证持久化。
 - 处理节点需具备访问下载节点 API 的网络权限。
 

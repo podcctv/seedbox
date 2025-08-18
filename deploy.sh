@@ -2,10 +2,14 @@
 set -euo pipefail
 
 # Deploy download and worker nodes using docker compose files if present
-for file in compose.download.yml compose.worker.yml; do
-  if [[ -f "$file" ]]; then
-    docker compose -f "$file" up -d
+for dir in download worker; do
+  compose_file="$dir/docker-compose.yml"
+  if [[ -f "$compose_file" ]]; then
+    (
+      cd "$dir"
+      docker compose up -d
+    )
   else
-    echo "Missing $file; skipping."
+    echo "Missing $compose_file; skipping."
   fi
 done

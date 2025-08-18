@@ -53,7 +53,7 @@ pwsh deploy.ps1
 ### 启动下载节点
 
 ```bash
-docker compose -f compose.download.yml up -d
+docker compose -f download/docker-compose.yml up -d
 ```
 
 访问：
@@ -64,7 +64,7 @@ docker compose -f compose.download.yml up -d
 ### 启动处理节点
 
 ```bash
-docker compose -f compose.worker.yml up -d
+docker compose -f worker/docker-compose.yml up -d
 ```
 
 处理节点自动轮询新任务并回传预览图。
