@@ -81,8 +81,10 @@ async def healthz():
 
 @app.post("/auth/login", response_model=LoginResponse)
 async def auth_login(payload: LoginRequest):
-    # NOTE: This is a stub implementation. Replace with real authentication.
-    role = "admin" if payload.username == "admin" else "user"
+    if not (payload.username == "admin" and payload.password == "admin"):
+        logger.info("invalid login username=%s", payload.username)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    role = "admin"
     exp = datetime.utcnow() + timedelta(hours=TOKEN_EXP_HOURS)
     logger.info("login username=%s role=%s", payload.username, role)
     return LoginResponse(token=FAKE_TOKEN, role=role, exp=exp)

@@ -21,3 +21,18 @@ def test_auth_verify_with_token():
     resp = client.get("/auth/verify", headers=headers)
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
+
+
+def test_auth_login_success():
+    resp = client.post(
+        "/auth/login", json={"username": "admin", "password": "admin"}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["token"] == "fake-jwt"
+
+
+def test_auth_login_failure():
+    resp = client.post(
+        "/auth/login", json={"username": "user", "password": "wrong"}
+    )
+    assert resp.status_code == 401
