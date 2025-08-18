@@ -8,7 +8,7 @@ services:
       - PYTHONPATH=/app
       - BITMAGNET_RO_DSN=${BITMAGNET_RO_DSN}
     ports:
-      - "8000:8000"
+      - "28000:8000"
 
   web:
     image: node:20
@@ -16,7 +16,7 @@ services:
     volumes:
       - ./web:/app
     environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
     command: sh -c "npm install && npm run dev"
     ports:
       - "3001:3000"
@@ -37,7 +37,7 @@ services:
     volumes:
       - ${DATA_DIR:-/opt/seedbox}/minio:/data
     ports:
-      - "9000:9000"
+      - "29000:9000"
       - "9090:9090"
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
