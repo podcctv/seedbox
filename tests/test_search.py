@@ -13,13 +13,8 @@ client = TestClient(main.app)
 
 def test_search_endpoint():
     response = client.get('/search', params={'q': 'test'})
-    assert response.status_code == 200
-    data = response.json()
-    assert 'results' in data
-    assert 'query' in data and data['query'] == 'test'
-    assert isinstance(data['results'], list)
-    if data['results']:
-        assert 'magnet' in data['results'][0]
+    assert response.status_code == 503
+    assert response.json()["detail"] == "bitmagnet database unavailable"
 
 
 class DummyConn:

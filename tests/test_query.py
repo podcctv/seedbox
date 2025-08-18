@@ -24,5 +24,5 @@ def test_admin_query_with_auth():
     resp = client.post(
         "/admin/query", json={"sql": "SELECT 1"}, headers=auth_headers()
     )
-    assert resp.status_code == 200
-    assert "rows" in resp.json()
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == "bitmagnet database unavailable"

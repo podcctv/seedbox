@@ -57,6 +57,21 @@ docker compose up -d
 pytest
 ```
 
+## 故障排查：数据库查询无结果
+
+若 Seedbox Web 或 `/admin/query` 返回空结果，可按照以下步骤排查：
+
+1. **确认 PostgreSQL 连接**  
+   使用 `psql` 手动连接，执行 `\conninfo` 与 `\dt public.*`，确认 `torrents` 等表存在并有数据。
+2. **核对 DSN 配置**  
+   在 `/admin/config` 页面或 `api/config.py` 中检查 `postgres_dsn` 是否指向正确的实例。
+3. **检查依赖**  
+   确保已安装 `asyncpg`，否则 API 会在启动时禁用数据库连接。
+4. **重启应用**  
+   修改 DSN 或安装依赖后需重启服务，以重新创建连接池。
+5. **验证查询**  
+   在 `/admin/query` 中执行 `SELECT COUNT(*) FROM public.torrents;`，若仍为 `503` 或空结果，请查看应用日志并确认数据库权限。
+
 ## 许可说明
 
 本项目仅供自有或已获授权的媒体内容使用。请勿利用本项目进行任何
