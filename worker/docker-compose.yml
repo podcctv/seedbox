@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  worker:
+    image: python:3.11-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      - API_URL=http://localhost:8000
+      - API_TOKEN=token
+    command: sh -c "pip install requests && python worker.py"
