@@ -1,9 +1,15 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
+	"log"
 	"net/http"
+	"net/url"
+	"os"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
 const authToken = "token"
@@ -23,6 +29,13 @@ type Item struct {
 }
 
 var items = []Item{{ID: 1, Title: "Sample", Status: "ready"}}
+
+type MagnetResult struct {
+	Title  string `json:"title"`
+	Magnet string `json:"magnet"`
+}
+
+var db *sql.DB
 
 type Config struct {
 	DownloadDir string `json:"downloadDir"`
@@ -64,10 +77,54 @@ func setupRouter() *gin.Engine {
 		}
 		c.Status(http.StatusOK)
 	})
+	api.GET("/search", func(c *gin.Context) {
+		q := c.Query("q")
+		if q == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "missing q"})
+			return
+		}
+		if db == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "db not configured"})
+			return
+		}
+		rows, err := db.Query(`SELECT encode(info_hash,'hex') as hash, name FROM torrents WHERE name ILIKE '%' || $1 || '%' LIMIT 20`, q)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer rows.Close()
+		var results []MagnetResult
+		for rows.Next() {
+			var hash, name string
+			if err := rows.Scan(&hash, &name); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			magnet := fmt.Sprintf("magnet:?xt=urn:btih:%s&dn=%s", hash, url.QueryEscape(name))
+			results = append(results, MagnetResult{Title: name, Magnet: magnet})
+		}
+		c.JSON(http.StatusOK, results)
+	})
 	r.Static("/admin", "../frontend")
 	return r
 }
 
 func main() {
+	var err error
+	host := os.Getenv("BITMAGNET_DB_HOST")
+	port := os.Getenv("BITMAGNET_DB_PORT")
+	user := os.Getenv("BITMAGNET_DB_USER")
+	pass := os.Getenv("BITMAGNET_DB_PASS")
+	name := os.Getenv("BITMAGNET_DB_NAME")
+	if name == "" {
+		name = "bitmagnet"
+	}
+	if host != "" && port != "" && user != "" {
+		dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, pass, host, port, name)
+		db, err = sql.Open("postgres", dsn)
+		if err != nil {
+			log.Printf("db open failed: %v", err)
+		}
+	}
 	setupRouter().Run(":28000")
 }

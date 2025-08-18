@@ -7,6 +7,11 @@ services:
     command: go run main.go
     ports:
       - "28000:28000"
+    environment:
+      - BITMAGNET_DB_HOST=${BITMAGNET_DB_HOST}
+      - BITMAGNET_DB_PORT=${BITMAGNET_DB_PORT}
+      - BITMAGNET_DB_USER=${BITMAGNET_DB_USER}
+      - BITMAGNET_DB_PASS=${BITMAGNET_DB_PASS}
   transmission:
     image: lscr.io/linuxserver/transmission:latest
     environment:
