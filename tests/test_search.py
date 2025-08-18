@@ -23,7 +23,7 @@ class DummyConn:
 
     async def fetch(self, sql, param=None):
         self.calls.append((sql, param))
-        if 'plainto_tsquery' in sql:
+        if 'websearch_to_tsquery' in sql:
             return []
         return [
             {
@@ -63,3 +63,5 @@ def test_search_fallback_ilike(monkeypatch):
     data = response.json()
     assert data['query'] == 'demo'
     assert data['results'] and data['results'][0]['torrent_name'] == 'demo'
+    # ensure full-text search attempted first
+    assert any('websearch_to_tsquery' in sql for sql, _ in pool.conn.calls)

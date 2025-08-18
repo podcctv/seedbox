@@ -126,7 +126,7 @@ async def search(q: Optional[str] = None):
                        ON c.type   = tc.content_type
                       AND c.source = tc.content_source
                       AND c.id     = tc.content_id
-                WHERE tc.tsv @@ plainto_tsquery('simple', $1)
+                WHERE tc.tsv @@ websearch_to_tsquery('simple', $1)
                 ORDER BY tc.created_at DESC
                 LIMIT 10
                 """,
