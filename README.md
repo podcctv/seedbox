@@ -63,8 +63,8 @@ pytest
 
 1. **确认 PostgreSQL 连接**  
    使用 `psql` 手动连接，执行 `\conninfo` 与 `\dt public.*`，确认 `torrents` 等表存在并有数据。
-2. **核对 DSN 配置**  
-   在 `/admin/config` 页面或 `api/config.py` 中检查 `postgres_dsn` 是否指向正确的实例。
+2. **核对 DSN 配置**
+   检查 `.env` 中的 `BITMAGNET_RO_DSN` 是否指向正确的实例。
 3. **检查依赖**  
    确保已安装 `asyncpg`，否则 API 会在启动时禁用数据库连接。
 4. **重启应用**  
