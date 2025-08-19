@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import time
+from pathlib import Path
+
 import requests
 
 API_URL = os.getenv("API_URL", "http://localhost:28000")
@@ -32,4 +36,43 @@ def report_done(job_id: int, sprite_path: str) -> int:
     return resp.status_code
 
 
-__all__ = ["next_job", "report_done"]
+def process(job: dict) -> int:
+    """Generate preview for a job and report completion."""
+    job_id = job["id"]
+    video_path = job["path"]
+    sprite_path = Path(video_path).with_suffix(".jpg")
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-i",
+            video_path,
+            "-vf",
+            "fps=1/10,scale=320:-1,tile=5x5",
+            str(sprite_path),
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return report_done(job_id, str(sprite_path))
+
+
+def run(poll_interval: int = 5) -> None:
+    """Continuously poll for jobs and process them."""
+    while True:
+        try:
+            job = next_job()
+        except requests.HTTPError as exc:
+            if exc.response is not None and exc.response.status_code in (204, 404):
+                time.sleep(poll_interval)
+                continue
+            raise
+        process(job)
+
+
+if __name__ == "__main__":
+    run()
+
+
+__all__ = ["next_job", "report_done", "process", "run"]
