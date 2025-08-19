@@ -68,6 +68,10 @@ def run(poll_interval: int = 5) -> None:
                 time.sleep(poll_interval)
                 continue
             raise
+        except requests.RequestException:
+            # Network issues like connection errors should not crash the worker
+            time.sleep(poll_interval)
+            continue
         process(job)
 
 
