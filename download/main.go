@@ -140,8 +140,7 @@ func setupRouter() *gin.Engine {
         }
         c.JSON(http.StatusOK, results)
     })
-    adminDir := getenvDefault("ADMIN_DIR", "../frontend")
-    r.Static("/admin", adminDir)
+    r.Static("/admin", "../frontend")
     return r
 }
 
