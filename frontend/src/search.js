@@ -1,8 +1,12 @@
+function getToken() {
+  return localStorage.getItem("X_AUTH") || "token";
+}
+
 document.getElementById("searchForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const q = document.getElementById("query").value;
   const resp = await fetch(`/search?q=${encodeURIComponent(q)}`, {
-    headers: { "X-Auth": "token" },
+    headers: { "X-Auth": getToken() },
   });
   if (!resp.ok) return;
   const data = await resp.json();

@@ -1,5 +1,9 @@
+function getToken() {
+  return localStorage.getItem("X_AUTH") || "token";
+}
+
 async function loadConfig() {
-  const resp = await fetch("/config", { headers: { "X-Auth": "token" } });
+  const resp = await fetch("/config", { headers: { "X-Auth": getToken() } });
   if (!resp.ok) return;
   const cfg = await resp.json();
   document.getElementById("downloadDir").value = cfg.downloadDir;
@@ -18,7 +22,7 @@ document.getElementById("configForm").addEventListener("submit", async (e) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Auth": "token",
+      "X-Auth": getToken(),
     },
     body: JSON.stringify(cfg),
   });

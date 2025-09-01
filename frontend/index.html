@@ -6,6 +6,10 @@
   </head>
   <body>
     <h1>Node Configuration</h1>
+    <div>
+      <label>Auth Token <input id="xAuth" placeholder="X-Auth token" /></label>
+      <button onclick="localStorage.setItem('X_AUTH', document.getElementById('xAuth').value || ''); alert('Token saved');">Save Token</button>
+    </div>
     <p><a href="search.html">Magnet Search</a></p>
     <form id="configForm">
       <label>Download Directory <input id="downloadDir" /></label><br />
